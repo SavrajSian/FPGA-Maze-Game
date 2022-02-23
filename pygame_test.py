@@ -1,4 +1,4 @@
-import pygame
+import pygame, random
 import numpy as np
 
 pygame.init()
@@ -9,33 +9,45 @@ pygame.display.set_caption("Tilt Labyrinth")
 bg = pygame.image.load("assets/bg.png")
 frame_shadow = pygame.image.load("assets/frame_shadow.png")
 frame = pygame.image.load("assets/frame.png")
-ball = pygame.image.load("assets/ball.png")
 
-ball_acc = [0, 0]
-ball_vel = [0, 0]
-ball_pos = [120, 150]
+ball_sprites = [pygame.image.load("assets/ball.png"), pygame.image.load("assets/ball_y.png"),
+				pygame.image.load("assets/ball_g.png"), pygame.image.load("assets/ball_b.png")]
 
-damping = 200
+balls = [None, None, None, None]
+
 friction = 0.95
+dt = 0.001
+
+class Ball:
+	def __init__ (self):
+		self.acc = [0, 0]
+		self.vel = [0, 0]
+		self.pos = [random.randint(110, 130), random.randint(140, 160)]
+		self.damping = 500
+		self.sprite = ball_sprites[active_balls]
+
+	def motion_calc (self, dt):
+		ball.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
+		ball.vel[1] += self.acc[1]*dt/self.damping
+
+		ball.vel[0] = self.vel[0]*friction
+		ball.vel[1] = self.vel[1]*friction
+
+		ball.pos[0] += self.vel[0]*dt
+		ball.pos[1] += self.vel[1]*dt
 
 def hex_to_dec (hex):
 	d = int(hex, 16)
-	if d < 2147483648: #80000000
+	if d < 2147483648: #h80000000
 		return d
 	else:
-		return d - 4294967296
+		return d - 4294967296 #hFFFFFFFF+1
 
-def motion_calc (dt):
-	ball_vel[0] += ball_acc[0]*dt/damping
-	ball_vel[1] += ball_acc[1]*dt/damping
-	ball_vel[0] = ball_vel[0]*friction
-	ball_vel[1] = ball_vel[1]*friction
-	ball_pos[0] += ball_vel[0]*dt
-	ball_pos[1] += ball_vel[1]*dt
-	print(ball_acc, ball_vel, ball_pos)
-
-
-prev_get_ticks = pygame.time.get_ticks()
+active_balls = 0
+balls[0] = Ball()
+active_balls = 1
+balls[1] = Ball()
+active_balls = 2
 
 running = True
 
@@ -43,33 +55,38 @@ while running:
 	screen.blit(bg, (0, 0))
 	screen.blit(frame_shadow, (0, 0))
 
-	ball_acc = [0,0]
-
-	dt = (pygame.time.get_ticks() - prev_get_ticks) / 1000
-	prev_get_ticks = pygame.time.get_ticks()
+	for ball in balls:
+		if ball != None:
+			ball.acc = [0,0]
 
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			running = False
-	
+
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_w]:
-		ball_acc[0] = hex_to_dec("CCCCCCCC")
+		balls[0].acc[0] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_s]:
-		ball_acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_w] and keys[pygame.K_s]:
-		ball_acc[0] = 0
+		balls[0].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_d]:
-		ball_acc[1] = hex_to_dec("33333333")
+		balls[0].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_a]:
-		ball_acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_d] and keys[pygame.K_a]:
-		ball_acc[1] = 0
+		balls[0].acc[1] = hex_to_dec("CCCCCCCC")
 
-	dt = pygame.time.Clock().tick(30)
-	print(dt)
-	motion_calc(dt*100)
-	screen.blit(ball, (ball_pos[1], ball_pos[0]))
+	if keys[pygame.K_UP]:
+		balls[1].acc[0] = hex_to_dec("CCCCCCCC")
+	if keys[pygame.K_DOWN]:
+		balls[1].acc[0] = hex_to_dec("33333333")
+	if keys[pygame.K_RIGHT]:
+		balls[1].acc[1] = hex_to_dec("33333333")
+	if keys[pygame.K_LEFT]:
+		balls[1].acc[1] = hex_to_dec("CCCCCCCC")
+
+	for ball in balls:
+		if ball != None:
+			ball.motion_calc(dt)
+			screen.blit(ball.sprite, (ball.pos[1], ball.pos[0]))
+	
 	screen.blit(frame, (0, 0))
 
 
