@@ -62,28 +62,34 @@ class Ball:
 
 	def block_collision (self):
 		for block in active_level.blocks:
+			#left hitbox
 			if (self.get_centre()[0] + self.halfsize > block.pos[0]) and\
-			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.center[0]) and\
-			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 8) and\
-			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 8):	#left hitbox
+			   (self.get_centre()[0] - self.halfsize < block.pos[0] + 10) and\
+			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 3) and\
+			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 3 and\
+			   (self.get_centre()[0] < block.pos[0])):	#so it doesn't interfere with bottom hitbox
 				self.pos[0] = block.pos[0] - self.size - 1
 				self.vel[0] = -self.vel[0]*restitution
-			if (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right) and\
-			   (self.get_centre()[0] + self.halfsize > block.pos[0] + block.rect.center[0]) and\
-			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 8) and\
-			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 8):	#right hitbox
+			#right hitbox
+			elif (self.get_centre()[0] + self.halfsize > block.pos[0] + block.rect.right - 10) and\
+			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right) and\
+			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 3) and\
+			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 3 and\
+			   (self.get_centre()[0] > block.pos[0] + block.rect.right)):	#so it doesn't interfere with bottom hitbox	
 				self.pos[0] = block.pos[0] + block.rect.right - 3
 				self.vel[0] = -self.vel[0]*restitution
-			if (self.get_centre()[0] + self.halfsize > block.pos[0] + 8) and\
-			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 8) and\
+			#up hitbox
+			elif (self.get_centre()[0] + self.halfsize > block.pos[0] + 3) and\
+			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 3) and\
 			   (self.get_centre()[1] + self.halfsize > block.pos[1]) and\
-			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.center[1]):	#up hitbox
+			   (self.get_centre()[1] - self.halfsize < block.pos[1] + 10):	
 				self.pos[1] = block.pos[1] - 1
 				self.vel[1] = -self.vel[1]*restitution
-			if (self.get_centre()[0] + self.halfsize > block.pos[0] + 8) and\
-			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 8) and\
-			   (self.get_centre()[1] + self.halfsize > block.pos[1] + block.rect.center[1]) and\
-			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom):	#down hitbox
+			#down hitbox
+			elif (self.get_centre()[0] + self.halfsize > block.pos[0] + 3) and\
+			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 3) and\
+			   (self.get_centre()[1] + self.halfsize > block.pos[1] + block.rect.bottom - 10) and\
+			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom):	
 				self.pos[1] = block.pos[1] + block.rect.bottom - 3
 				self.vel[1] = -self.vel[1]*restitution
 
