@@ -21,6 +21,7 @@ friction = 0.95
 restitution = 0.7
 dt = 0.001
 
+
 class Ball:
 	def __init__ (self, ID):
 		self.ID = ID
@@ -93,35 +94,6 @@ class Ball:
 				self.pos[1] = block.pos[1] + block.rect.bottom - 3
 				self.vel[1] = -self.vel[1]*restitution
 
-	# def ball_collision (self):
-	# 	for ball in balls:
-	# 		if ball != None:
-	# 			if ball.ID != self.ID:
-	# 				np_self = np.asarray(self.get_centre())
-	# 				np_ball = np.asarray(ball.get_centre())
-	# 				line_of_impact = np_self - np_ball
-	# 				distance = np.linalg.norm(line_of_impact) #vector magnitude
-	# 				if distance < 42:	#2 radii
-	# 					cos_alpha = np.dot(line_of_impact, np.array([1, 0]))/	\
-	# 								(np.linalg.norm(line_of_impact)*np.linalg.norm(np.array([1, 0]))) #cosine similarity between line and +1 vector
-	# 					alpha = np.arccos(np.clip(cos_alpha, -1, 1)) #vector angle
-	# 					if np_self[1] > np_ball[1]:
-	# 						alpha = -alpha		#0→-π
-	# 					ball_impact_vel = np.linalg.norm(np.asarray(ball.vel)) #Swap velocities on relevant component (new axis)
-	# 					self_vel = np.linalg.norm(np.asarray(self.vel)) #preserved momentum on irrelevant axis
-	# 					if ball.vel != [0.0, 0.0]:
-	# 						cos_theta = np.dot(ball_impact_vel, np.array([1, 0]))/	\
-	# 									(np.linalg.norm(ball_impact_vel)*np.linalg.norm(np.array([1, 0]))) #cosine similarity between velocity and +1 vector
-	# 					else: cos_theta = 0
-	# 					theta = np.arccos(np.clip(cos_theta, -1, 1)) #vector angle
-	# 					if ball.vel[1] > 0:
-	# 						theta = -theta		#0→-π
-	# 					phi = alpha - theta 	#angle between relevant impact component and velocity
-	# 					impact_velocity_rel = ball_impact_vel*np.cos(phi)	#projection of velocity onto axis
-	# 					velocity_irrel = self_vel*np.cos(phi + math.pi/2)
-	# 					final_vel = impact_velocity_rel + velocity_irrel
-	# 					self.vel = [-final_vel*np.cos(alpha), -final_vel*np.sin(alpha)]		#return to global x, y components
-
 def show_score(): #may be unfinished
     score_font = pygame.font.Font(None, 30)
     score_surface = score_font.render("SCORE: " + str(score), True, (255, 0, 0))
@@ -170,12 +142,15 @@ level1_block_data = [(Long, [220, 200], 0),
 level1 = Level(level1_block_data)
 active_level = level1
 
+col1 = (218, 165, 32)
+x_circle2 = 1100
+y_circle2 = 400
 running = True
 
 while running:
 	screen.blit(bg, (0, 0))
 	screen.blit(frame_shadow, (0, 0))
-
+	circle2 = pygame.draw.circle(screen, (col1), (int(x_circle2), int(y_circle2)), 40) # temp circle just for functionality. 
 	for ball in balls:
 		if ball != None:
 			ball.acc = [0,0]
@@ -223,7 +198,12 @@ while running:
 
 	for block in active_level.blocks:
 		screen.blit(block.image, (block.pos[0], block.pos[1]))
+	
+	if (balls[0]).colliderect(circle2):
+		score += 10; # 10 points for winning. -> to display to fpga.
 
+	if (balls[1]).colliderect(circle2):
+		score += 10; # 10 points for winning. -> to display to fpga.
 	for ball in balls:
 		if ball != None:
 			ball.motion_calc(dt)
