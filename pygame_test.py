@@ -65,29 +65,29 @@ class Ball:
 			#left hitbox
 			if (self.get_centre()[0] + self.halfsize > block.pos[0]) and\
 			   (self.get_centre()[0] - self.halfsize < block.pos[0] + 20) and\
-			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 10) and\
-			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 10 and\
-			   (self.get_centre()[0] < block.pos[0])):	#so it doesn't interfere with bottom hitbox
+			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 15) and\
+			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 15):# and\
+			   #(self.get_centre()[0] < block.pos[0])):	#so it doesn't interfere with bottom hitbox
 				self.pos[0] = block.pos[0] - self.size - 1
 				self.vel[0] = -self.vel[0]*restitution
 			#right hitbox
-			elif (self.get_centre()[0] + self.halfsize > block.pos[0] + block.rect.right - 20) and\
+			if (self.get_centre()[0] + self.halfsize > block.pos[0] + block.rect.right - 20) and\
 			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right) and\
-			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 10) and\
-			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 10 and\
-			   (self.get_centre()[0] > block.pos[0] + block.rect.right)):	#so it doesn't interfere with bottom hitbox	
+			   (self.get_centre()[1] + self.halfsize > block.pos[1] + 15) and\
+			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 20):# and\
+			   #(self.get_centre()[0] > block.pos[0] + block.rect.right)):	#so it doesn't interfere with bottom hitbox	
 				self.pos[0] = block.pos[0] + block.rect.right - 3
 				self.vel[0] = -self.vel[0]*restitution
 			#up hitbox
-			elif (self.get_centre()[0] + self.halfsize > block.pos[0] + 3) and\
-			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 3) and\
+			if (self.get_centre()[0] + self.halfsize > block.pos[0] + 10) and\
+			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 5) and\
 			   (self.get_centre()[1] + self.halfsize > block.pos[1]) and\
 			   (self.get_centre()[1] - self.halfsize < block.pos[1] + 20):	
-				self.pos[1] = block.pos[1] - 1
+				self.pos[1] = block.pos[1] - self.size - 1
 				self.vel[1] = -self.vel[1]*restitution
 			#down hitbox
-			elif (self.get_centre()[0] + self.halfsize > block.pos[0] + 3) and\
-			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 3) and\
+			if (self.get_centre()[0] + self.halfsize > block.pos[0] + 10) and\
+			   (self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 5) and\
 			   (self.get_centre()[1] + self.halfsize > block.pos[1] + block.rect.bottom - 20) and\
 			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom):	
 				self.pos[1] = block.pos[1] + block.rect.bottom - 3
@@ -132,9 +132,11 @@ def hex_to_dec (hex):
 
 class Level:
 	def __init__ (self, images, coords):
-		self.pairs = list(zip(images, coords))
-		self.block1 = Block(self.pairs[0][0], self.pairs[0][1])
-		self.blocks = [self.block1]
+		self.block1 = Block(images[0], coords[0])
+		self.block2 = Block(pygame.transform.rotate(images[0], 90), coords[1])
+		self.block3 = Block(images[0], coords[2])
+		self.block4 = Block(pygame.transform.rotate(images[0], 90), coords[3])
+		self.blocks = [self.block1, self.block2, self.block3, self.block4]
 
 
 class Block:
@@ -149,7 +151,7 @@ for i in range(4):
 	active_balls += 1
 
 block_images = [pygame.image.load("assets/block1.png")]
-level1_coords = [[300, 80]]
+level1_coords = [[50, 80], [600, 80], [600,80], [900,500]]
 
 level1 = Level(block_images, level1_coords)
 active_level = level1
