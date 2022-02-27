@@ -131,17 +131,18 @@ def hex_to_dec (hex):
 		return d - 4294967296 #hFFFFFFFF+1
 
 class Level:
-	def __init__ (self, images, coords):
-		self.block1 = Block(images[0], coords[0])
-		self.block2 = Block(pygame.transform.rotate(images[0], 90), coords[1])
-		self.block3 = Block(images[0], coords[2])
-		self.block4 = Block(pygame.transform.rotate(images[0], 90), coords[3])
-		self.blocks = [self.block1, self.block2, self.block3, self.block4]
+	def __init__ (self, level_block_data):
+		images = [tup[0] for i,tup in enumerate(level_block_data)]
+		coords = [tup[1] for i,tup in enumerate(level_block_data)]
+		rotate = [tup[2] for i,tup in enumerate(level_block_data)]
+		self.blocks = []
+		for i in range(len(coords)):
+			self.blocks.append(Block(images[i], coords[i], rotate[i]))
 
 
 class Block:
-	def __init__ (self, image, coords):
-		self.image = image
+	def __init__ (self, image, coords, rotate):
+		self.image = pygame.transform.rotate(image, rotate)
 		self.pos = coords
 		self.rect = self.image.get_rect()
 
@@ -150,10 +151,17 @@ for i in range(4):
 	balls[i] = Ball(i)
 	active_balls += 1
 
-block_images = [pygame.image.load("assets/block1.png")]
-level1_coords = [[50, 80], [600, 80], [600,80], [900,500]]
+Long = pygame.image.load("assets/long.png")
+Med = pygame.image.load("assets/med.png")
+Short = pygame.image.load("assets/short.png")
 
-level1 = Level(block_images, level1_coords)
+#block_data is (image, [coords], rotate)
+level1_block_data = [(Long, [220, 200], 0),
+					 (Med, [400, 280], 90), 
+					 (Short, [1000,250], 0), 
+					 (Med, [700,200], 0),
+					 (Med, [900,400], 0)]
+level1 = Level(level1_block_data)
 active_level = level1
 
 running = True
