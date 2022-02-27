@@ -148,6 +148,9 @@ y_circle2 = 400
 running = True
 
 while running:
+	screen.fill([255,255,255])
+	screen.blit(frame, (0, 0))
+	
 	screen.blit(bg, (0, 0))
 	screen.blit(frame_shadow, (0, 0))
 	circle2 = pygame.draw.circle(screen, (col1), (int(x_circle2), int(y_circle2)), 40) # temp circle just for functionality. 
@@ -159,9 +162,12 @@ while running:
 		score += 10; # 10 points for winning. -> to display to fpga.
 	
 	font = pygame.font.Font(None, 40)
-	text1 = font.render("Score 1: " + str(score), True, (0, 255, 0))
+	text1 = font.render("Score 1: " + str(score), True, (0, 0, 0))
+	screen.blit(text1, (1000,700))
+	#pygame.display.flip()
 	font = pygame.font.Font(None, 40)
-	text2 = font.render("Score 2: " + str(score), True, (0, 255, 0))
+	text2 = font.render("Score 2: " + str(score), True, (0, 0, 0))
+	screen.blit(text2, (100,700))
 	pygame.display.flip()
 	for ball in balls:
 		if ball != None:
@@ -220,6 +226,6 @@ while running:
 			#ball.ball_collision()
 			screen.blit(ball.image, (ball.pos[0], ball.pos[1]))
 	
-	screen.blit(frame, (0, 0))
+	
 
 	pygame.display.update()
