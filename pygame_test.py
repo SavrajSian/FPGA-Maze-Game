@@ -1,8 +1,8 @@
-import pygame, random, math
+import pygame, random, math, time
 import numpy as np
 
 pygame.init()
-
+score = 0
 screen = pygame.display.set_mode((1280,720))
 pygame.display.set_caption("Tilt Labyrinth")#################
 
@@ -122,6 +122,11 @@ class Ball:
 	# 					final_vel = impact_velocity_rel + velocity_irrel
 	# 					self.vel = [-final_vel*np.cos(alpha), -final_vel*np.sin(alpha)]		#return to global x, y components
 
+def show_score(): #may be unfinished
+    score_font = pygame.font.Font(None, 30)
+    score_surface = score_font.render("SCORE: " + str(score), True, (255, 0, 0))
+    score_rect = score_surface.get_rect()
+
 
 def hex_to_dec (hex):
 	d = int(hex, 16)
@@ -129,6 +134,13 @@ def hex_to_dec (hex):
 		return d
 	else:
 		return d - 4294967296 #hFFFFFFFF+1
+
+class Block:
+	def __init__ (self, image, coords, rotate):
+		self.image = pygame.transform.rotate(image, rotate)
+		self.pos = coords
+		self.rect = self.image.get_rect()
+
 
 class Level:
 	def __init__ (self, level_block_data):
@@ -139,12 +151,6 @@ class Level:
 		for i in range(len(coords)):
 			self.blocks.append(Block(images[i], coords[i], rotate[i]))
 
-
-class Block:
-	def __init__ (self, image, coords, rotate):
-		self.image = pygame.transform.rotate(image, rotate)
-		self.pos = coords
-		self.rect = self.image.get_rect()
 
 active_balls = 0
 for i in range(4):
