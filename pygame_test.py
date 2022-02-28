@@ -21,7 +21,7 @@ friction = 0.95
 restitution = 0.7
 dt = 0.001
 
-
+image = ball_images[0]
 class Ball:
 	def __init__ (self, ID):
 		self.ID = ID
@@ -93,7 +93,43 @@ class Ball:
 			   (self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom):	
 				self.pos[1] = block.pos[1] + block.rect.bottom - 3
 				self.vel[1] = -self.vel[1]*restitution
+	def block_collision (self):
+			for block in active_level.blocks:
+				#left hitbox
+				if (self.get_centre()[0] + self.halfsize > block.pos[0]) and\
+				(self.get_centre()[0] - self.halfsize < block.pos[0] + 20) and\
+				(self.get_centre()[1] + self.halfsize > block.pos[1] + 15) and\
+				(self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 15):# and\
+				#(self.get_centre()[0] < block.pos[0])):	#so it doesn't interfere with bottom hitbox
+					self.pos[0] = block.pos[0] - self.size - 1
+					self.vel[0] = -self.vel[0]*restitution
+				#right hitbox
+				if (self.get_centre()[0] + self.halfsize > block.pos[0] + block.rect.right - 20) and\
+				(self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right) and\
+				(self.get_centre()[1] + self.halfsize > block.pos[1] + 15) and\
+				(self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom - 20):# and\
+				#(self.get_centre()[0] > block.pos[0] + block.rect.right)):	#so it doesn't interfere with bottom hitbox	
+					self.pos[0] = block.pos[0] + block.rect.right - 3
+					self.vel[0] = -self.vel[0]*restitution
+				#up hitbox
+				if (self.get_centre()[0] + self.halfsize > block.pos[0] + 10) and\
+				(self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 5) and\
+				(self.get_centre()[1] + self.halfsize > block.pos[1]) and\
+				(self.get_centre()[1] - self.halfsize < block.pos[1] + 20):	
+					self.pos[1] = block.pos[1] - self.size - 1
+					self.vel[1] = -self.vel[1]*restitution
+				#down hitbox
+				if (self.get_centre()[0] + self.halfsize > block.pos[0] + 10) and\
+				(self.get_centre()[0] - self.halfsize < block.pos[0] + block.rect.right - 5) and\
+				(self.get_centre()[1] + self.halfsize > block.pos[1] + block.rect.bottom - 20) and\
+				(self.get_centre()[1] - self.halfsize < block.pos[1] + block.rect.bottom):	
+					self.pos[1] = block.pos[1] + block.rect.bottom - 3
+					self.vel[1] = -self.vel[1]*restitution
 
+	#def hit_hole (self):
+
+		
+							
 def show_score(): #may be unfinished
     score_font = pygame.font.Font(None, 30)
     score_surface = score_font.render("SCORE: " + str(score), True, (255, 0, 0))
@@ -129,9 +165,13 @@ for i in range(4):
 	balls[i] = Ball(i)
 	active_balls += 1
 
+ball1 = balls[0]
+ball2 = balls[1]
+
 Long = pygame.image.load("assets/long.png")
 Med = pygame.image.load("assets/med.png")
 Short = pygame.image.load("assets/short.png")
+
 
 #block_data is (image, [coords], rotate)
 level1_block_data = [(Long, [220, 200], 0),
@@ -143,6 +183,7 @@ level1 = Level(level1_block_data)
 active_level = level1
 
 col1 = (218, 165, 32)
+col2 = (30,224,33,100)
 x_circle2 = 1100
 y_circle2 = 400
 running = True
@@ -150,24 +191,29 @@ running = True
 while running:
 	screen.fill([255,255,255])
 	screen.blit(frame, (0, 0))
-	
+
 	screen.blit(bg, (0, 0))
 	screen.blit(frame_shadow, (0, 0))
 	circle2 = pygame.draw.circle(screen, (col1), (int(x_circle2), int(y_circle2)), 40) # temp circle just for functionality. 
-	
-	if (circle2).colliderect(balls[0]):
+	#moving_circle1 = pygame.draw.circle(screen, col2),(	ball1.pos, 10 )
+	moving_circle1 = pygame.draw.circle(screen, col2, (ball1.pos[0], ball1.pos[1]), 10)
+	moving_circle2 = pygame.draw.circle(screen, col2, (ball2.pos[0], ball2.pos[1]), 10)
+	if (moving_circle1).colliderect(circle2):
 		score += 10; # 10 points for winning. -> to display to fpga.
+		finalstatement = font.render("Player 1 WON!", True, (0, 0, 0))
+		pygame.QUIT()
+	if (moving_circle2).colliderect(circle2):
+		score += 10; # 10 points for winning. -> to display to fpga.
+		finalstatement = font.render("Player 2 WON!", True, (0, 0, 0))
+		pygame.QUIT()
 
-	if (circle2).colliderect(balls[1]):
-		score += 10; # 10 points for winning. -> to display to fpga.
-	
-	font = pygame.font.Font(None, 40)
+	font = pygame.font.Font(None, 50)
 	text1 = font.render("Score 1: " + str(score), True, (0, 0, 0))
-	screen.blit(text1, (1000,700))
+	screen.blit(text1, (1000,650))
 	#pygame.display.flip()
-	font = pygame.font.Font(None, 40)
+	font = pygame.font.Font(None, 50)
 	text2 = font.render("Score 2: " + str(score), True, (0, 0, 0))
-	screen.blit(text2, (100,700))
+	screen.blit(text2, (100,650))
 	pygame.display.flip()
 	for ball in balls:
 		if ball != None:
