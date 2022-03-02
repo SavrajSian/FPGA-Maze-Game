@@ -1,4 +1,5 @@
-import pygame, random, math
+import pygame, pygame.gfxdraw
+import math
 import numpy as np
 
 pygame.init()
@@ -8,7 +9,8 @@ pygame.display.set_caption(" ")#################
 
 vignette = pygame.image.load("assets/vignette.png")
 hole_image = pygame.image.load("assets/hole.png")
-goal_image = pygame.image.load("assets/goal.png").convert_alpha()
+goal_glow_image = pygame.image.load("assets/goal_glow.png").convert_alpha()
+goal_white_image = pygame.image.load("assets/goal_white.png").convert_alpha()
 ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.image.load("assets/ball_y.png").convert_alpha(),
 				pygame.image.load("assets/ball_g.png").convert_alpha(), pygame.image.load("assets/ball_b.png").convert_alpha()]
 
@@ -104,9 +106,13 @@ class Ball:
 					self.vel = [direction[0]*200, direction[1]*200]
 					self.scaler -= 0.01
 					self.image = pygame.transform.smoothscale(ball_images[self.ID], (self.size*self.scaler, self.size*self.scaler)) #makes ball smaller slowly
-					self.brightness -= 15
 					if self.scaler > 0.9:
-						self.image.fill((self.brightness, self.brightness, self.brightness, 255), None, pygame.BLEND_RGBA_MULT)
+						self.brightness -= 15
+						if type(hole) == Goal:
+							self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
+							self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
+						else:
+							self.image.fill((self.brightness, self.brightness, self.brightness, 255), None, pygame.BLEND_RGBA_MULT)
 					else:
 						self.image.fill((255, 255, 255, 0), None, pygame.BLEND_RGBA_MULT) #hide ball during timeout
 					if self.scaler < 0.7:
@@ -150,24 +156,24 @@ def hex_to_dec (hex):
 		return d - 4294967296 #hFFFFFFFF+1
 
 class Level:
-	def __init__ (self, block_coords, hole_coords, colour, bg_colour, shadow_colour):
+	def __init__ (self, block_coords, hole_coords, colour, bg_colour, edge_colour, goal_colour):
 		self.colour = colour
 		self.bg_colour = bg_colour
-		self.shadow_colour = shadow_colour
+		self.edge_colour = edge_colour
 		self.blocks = []
 		for i in range(len(block_coords)):
 			self.blocks.append(Block(block_coords[i]))
 		self.holes = []
-		self.holes.append(Goal(hole_coords[0]))
+		self.holes.append(Goal(hole_coords[0], goal_colour))
 		for i in range(1, len(hole_coords)):
-			self.holes.append(Hole(hole_coords[i]))
+			self.holes.append(Hole(hole_coords[i], goal_colour))
 
 	def draw_frame (self):
 		#parallax
-		pygame.draw.rect(screen, active_level.shadow_colour, pygame.Rect(10, 0, 83, 720))
-		pygame.draw.rect(screen, active_level.shadow_colour, pygame.Rect(1190, 0, 80, 720))
-		pygame.draw.rect(screen, active_level.shadow_colour, pygame.Rect(0, 10, 1280, 74))
-		pygame.draw.rect(screen, active_level.shadow_colour, pygame.Rect(0, 635, 1280, 80))
+		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(10, 0, 83, 720))
+		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(1190, 0, 80, 720))
+		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(0, 10, 1280, 74))
+		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(0, 635, 1280, 80))
 		#frame
 		pygame.draw.rect(screen, active_level.colour, pygame.Rect(0, 0, 83, 720))
 		pygame.draw.rect(screen, active_level.colour, pygame.Rect(1200, 0, 80, 720))
@@ -181,14 +187,16 @@ class Block:
 		self.pos = [coords[0], coords[1]]
 
 class Hole:
-	def __init__ (self, coords):
+	def __init__ (self, coords, colour):
 		self.image = hole_image
 		self.rect = self.image.get_rect()
 		self.pos = [coords[0], coords[1]]
 
 class Goal (Hole):
-	def __init__ (self, coords):
-		self.image = goal_image
+	def __init__ (self, coords, colour):
+		self.white = goal_white_image
+		self.image = goal_glow_image
+		self.image.fill(colour, None, pygame.BLEND_RGBA_MULT)
 		self.rect = self.image.get_rect()
 		self.pos = [coords[0], coords[1]]
 
@@ -199,7 +207,7 @@ def draw_parallax (object):
 			  object.pos[1] + scale_factorY,
 			  object.rect.right - object.pos[0] + scale_factorX,
 			  object.rect.bottom - object.pos[1] + scale_factorY]
-	pygame.draw.rect(screen, active_level.shadow_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
+	pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
 
 active_balls = 0
 for i in range(4):
@@ -209,13 +217,16 @@ for i in range(4):
 level1_blocks = [(280, 70, 80, 500),
 				 (600, 200, 80, 500),
 				 (1000, 120, 80, 80)]
-level1_holes = [(1050, 300), #first hole is always the goal
+level1_holes = [(950, 200), #first hole is always the goal
 				(800, 500)]
 level1_colour = (190,25,90) #Magenta
 level1_bg_colour = (120,15,70)
-level1_shadow_colour = (100,10,60)
-level1 = Level(level1_blocks, level1_holes, level1_colour, level1_bg_colour, level1_shadow_colour)
+level1_edge_colour = (100,10,60)
+level1_goal_colour = (255, 110, 160, 255) #RGBA
+level1 = Level(level1_blocks, level1_holes, level1_colour, level1_bg_colour, level1_edge_colour, level1_goal_colour)
 active_level = level1
+
+
 
 running = True
 
@@ -238,6 +249,8 @@ while running:
 
 	for hole in active_level.holes:
 		screen.blit(hole.image, (hole.pos[0], hole.pos[1]))
+	goal_centre = [active_level.holes[0].pos[0] + 60, active_level.holes[0].pos[1] + 60]
+	screen.blit(active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
 
 
 	for ball in balls:
