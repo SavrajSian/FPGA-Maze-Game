@@ -214,8 +214,8 @@ for i in range(4):
 	balls[i] = Ball(i)
 	active_balls += 1
 
-level1_blocks = [(300, 80, 60, 320),
-				 (750, 300, 60, 320)]
+level1_blocks = [(300, 50, 60, 320),
+				 (750, 300, 60, 380)]
 level1_holes = [(1050, 450), #first hole is always the goal
 				(500, 100),
                 (600, 500),
@@ -227,9 +227,9 @@ level1_goal_colour = (150, 150, 150, 1) #RGBA
 level1 = Level(level1_blocks, level1_holes, level1_colour, level1_bg_colour, level1_edge_colour, level1_goal_colour)
 active_level = level1
 
-level2_blocks = [(400, 80, 60, 100),
-				 (600, 300, 60, 320),
-				 (1100, 200, 60, 100)]
+level2_blocks = [(400, 50, 60, 100),
+				 (600, 300, 60, 380),
+				 (1100, 200, 120, 60)]
 level2_holes = [(1050, 450), #first hole is always the goal
 				(100, 200),
                 (200, 500),
@@ -243,9 +243,9 @@ level2_goal_colour = (150, 150, 150, 1) #RGBA
 level2 = Level(level2_blocks, level2_holes, level2_colour, level2_bg_colour, level2_edge_colour, level2_goal_colour)
 active_level = level2
 
-level3_blocks = [(300, 80, 60, 420),
-				 (600, 300, 60, 320),
-				 (800, 80, 60, 320)]
+level3_blocks = [(300, 50, 60, 420),
+				 (600, 300, 60, 380),
+				 (800, 50, 60, 320)]
 level3_holes = [(1050, 100), #first hole is always the goal
 				(120, 550),
                 (450, 450),
@@ -260,9 +260,9 @@ level3_goal_colour = (150, 150, 150, 1) #RGBA
 level3 = Level(level3_blocks, level3_holes, level3_colour, level3_bg_colour, level3_edge_colour, level3_goal_colour)
 active_level = level3
 
-level4_blocks = [(100, 500, 60, 320),
-				 (300, 80, 60, 320),
-				 (600, 200, 60, 420)]
+level4_blocks = [(100, 500, 320, 100),
+				 (300, 50, 60, 350),
+				 (600, 220, 60, 480)]
 level4_holes = [(1050, 450), #first hole is always the goal
 				(250, 475),
                 (475, 500),
@@ -278,12 +278,12 @@ level4_goal_colour = (150, 150, 150, 1) #RGBA
 level4 = Level(level4_blocks, level4_holes, level4_colour, level4_bg_colour, level4_edge_colour, level4_goal_colour)
 active_level = level4
 
-level5_blocks = [(300, 80, 60, 100),
-				 (200, 300, 60, 320),
+level5_blocks = [(300, 50, 60, 120),
+				 (200, 300, 60, 400),
 				 (500, 80, 60, 320),
                  (500, 550, 60, 100),
                  (800, 550, 60, 100),
-                 (900, 300, 60, 320)]
+                 (900, 300, 340, 60)]
 level5_holes = [(1050, 450), #first hole is always the goal
 				(400, 200),
                 (350, 350),
