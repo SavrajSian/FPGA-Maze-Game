@@ -215,9 +215,9 @@ for i in range(4):
 	active_balls += 1
 
 level1_blocks = [(300, 50, 60, 320),
-				 (750, 300, 60, 380)]
+		(750, 300, 60, 380)]
 level1_holes = [(1050, 450), #first hole is always the goal
-				(500, 100),
+		(500, 100),
                 (600, 500),
                 (1000, 200)]
 level1_colour = (190,25,90) #Magenta
@@ -228,10 +228,10 @@ level1 = Level(level1_blocks, level1_holes, level1_colour, level1_bg_colour, lev
 active_level = level1
 
 level2_blocks = [(400, 50, 60, 100),
-				 (600, 300, 60, 380),
-				 (1100, 200, 120, 60)]
+		(600, 300, 60, 380),
+		(1100, 200, 120, 60)]
 level2_holes = [(1050, 450), #first hole is always the goal
-				(100, 200),
+		(100, 200),
                 (200, 500),
                 (800, 300),
                 (1000, 400),
@@ -244,10 +244,10 @@ level2 = Level(level2_blocks, level2_holes, level2_colour, level2_bg_colour, lev
 active_level = level2
 
 level3_blocks = [(300, 50, 60, 420),
-				 (600, 300, 60, 380),
-				 (800, 50, 60, 320)]
+		(600, 300, 60, 380),
+		(800, 50, 60, 320)]
 level3_holes = [(1050, 100), #first hole is always the goal
-				(120, 550),
+		(120, 550),
                 (450, 450),
                 (650, 250),
                 (850, 100),
@@ -261,10 +261,10 @@ level3 = Level(level3_blocks, level3_holes, level3_colour, level3_bg_colour, lev
 active_level = level3
 
 level4_blocks = [(100, 500, 320, 100),
-				 (300, 50, 60, 350),
-				 (600, 220, 60, 480)]
+		(300, 50, 60, 350),
+		(600, 220, 60, 480)]
 level4_holes = [(1050, 450), #first hole is always the goal
-				(250, 475),
+		(250, 475),
                 (475, 500),
                 (700, 200),
                 (975, 200),
@@ -279,13 +279,13 @@ level4 = Level(level4_blocks, level4_holes, level4_colour, level4_bg_colour, lev
 active_level = level4
 
 level5_blocks = [(300, 50, 60, 120),
-				 (200, 300, 60, 400),
-				 (500, 80, 60, 320),
-                 (500, 550, 60, 100),
-                 (800, 550, 60, 100),
-                 (900, 300, 340, 60)]
+		(200, 300, 60, 400),
+		(500, 80, 60, 320),
+                (500, 550, 60, 100),
+                (800, 550, 60, 100),
+                (900, 300, 340, 60)]
 level5_holes = [(1050, 450), #first hole is always the goal
-				(400, 200),
+		(400, 200),
                 (350, 350),
                 (450, 400),
                 (350, 575),
