@@ -217,8 +217,8 @@ for i in range(4):
 level1_blocks = [(300, 80, 60, 320),
 				 (750, 300, 60, 320)]
 level1_holes = [(1050, 450), #first hole is always the goal
-				(500, 100)
-                (600, 500)
+				(500, 100),
+                (600, 500),
                 (1000, 200)]
 level1_colour = (190,25,90) #Magenta
 level1_bg_colour = (120,15,70)
