@@ -210,9 +210,9 @@ def draw_parallax (object):
 	pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
 
 level1_blocks = [(300, 50, 60, 320),
-				(750, 300, 60, 380)]
+		(750, 300, 60, 380)]
 level1_holes = [(1050, 450), #first hole is always the goal
-				(500, 100),
+		(500, 100),
                 (600, 500),
                 (1000, 200)]
 level1_colour = (190,25,90) #Magenta
@@ -221,11 +221,11 @@ level1_edge_colour = (100,10,60)
 level1_goal_colour = (255, 110, 160, 255) #RGBA
 level1 = Level(level1_blocks, level1_holes, level1_colour, level1_bg_colour, level1_edge_colour, level1_goal_colour)
 
-level2_blocks = [(400, 50, 60, 100),
-				(600, 300, 60, 380),
-				(1100, 200, 120, 60)]
+level2_blocks = [(400, 50, 60, 300),
+		(600, 300, 60, 380),
+		(1100, 200, 300, 60)]
 level2_holes = [(1050, 450), #first hole is always the goal
-				(100, 200),
+		(100, 200),
                 (200, 500),
                 (800, 300),
                 (1000, 400),
@@ -237,26 +237,26 @@ level2_goal_colour = (250, 200, 255, 255) #RGBA
 level2 = Level(level2_blocks, level2_holes, level2_colour, level2_bg_colour, level2_edge_colour, level2_goal_colour)
 
 level3_blocks = [(300, 50, 60, 420),
-				(600, 300, 60, 380),
-				(800, 50, 60, 320)]
+		(600, 300, 60, 380),
+		(800, 50, 60, 320)]
 level3_holes = [(1050, 100), #first hole is always the goal
-				(120, 550),
+		(120, 550),
                 (450, 450),
                 (650, 250),
                 (850, 100),
                 (1100, 450),
                 (450, 250)]
-level3_colour = (41, 153, 66) #Light green
+level3_colour = (41, 204, 73) #Light green
 level3_bg_colour = (44, 153, 66) #Dark green
 level3_edge_colour = (27, 112, 44)
 level3_goal_colour = (200, 255, 200, 255) #RGBA
 level3 = Level(level3_blocks, level3_holes, level3_colour, level3_bg_colour, level3_edge_colour, level3_goal_colour)
 
-level4_blocks = [(100, 500, 320, 100),
-				(300, 50, 60, 350),
-				(600, 220, 60, 480)]
+level4_blocks = [(80, 580, 350, 80),
+		(300, 50, 60, 350),
+		(600, 220, 60, 480)]
 level4_holes = [(1050, 450), #first hole is always the goal
-				(250, 475),
+		(250, 475),
                 (475, 500),
                 (700, 200),
                 (975, 200),
@@ -270,13 +270,13 @@ level4_goal_colour = (255, 230, 200, 255) #RGBA
 level4 = Level(level4_blocks, level4_holes, level4_colour, level4_bg_colour, level4_edge_colour, level4_goal_colour)
 
 level5_blocks = [(300, 50, 60, 120),
-				(200, 300, 60, 400),
-				(500, 50, 60, 320),
+		(200, 300, 60, 400),
+		(500, 50, 60, 320),
                 (500, 550, 60, 100),
                 (800, 550, 60, 100),
                 (900, 300, 340, 60)]
 level5_holes = [(1050, 450), #first hole is always the goal
-				(400, 200),
+		(400, 200),
                 (350, 350),
                 (450, 400),
                 (350, 575),
