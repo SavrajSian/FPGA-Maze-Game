@@ -14,7 +14,7 @@ goal_white_image = pygame.image.load("assets/goal_white.png").convert_alpha()
 ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.image.load("assets/ball_y.png").convert_alpha(),
 				pygame.image.load("assets/ball_g.png").convert_alpha(), pygame.image.load("assets/ball_b.png").convert_alpha()]
 ball_colours = [(230, 230, 230), (255, 255, 170), (170, 255, 170), (170, 220, 255)]
-
+ball_scores = [0,0,0,0]
 ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
 
 balls = [None, None, None, None]
@@ -114,31 +114,37 @@ class Ball:
 					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, radius=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
 
 	def hole_collision (self):
+		global active_level
 		for hole in active_level.holes:
-				np_self = np.asarray(self.get_centre())
-				np_hole = np.asarray([hole.pos[0] + hole.rect.center[0], hole.pos[1] + hole.rect.center[1]])
-				line = np_self - np_hole
-				distance = np.linalg.norm(line)
-				if distance < 30:	#ball centre goes into hole
-					direction = [np_hole[0] - np_self[0], np_hole[1] - np_self[1]]
-					self.vel = [direction[0]*200, direction[1]*200]
-					self.scaler -= 0.01
-					self.image = pygame.transform.smoothscale(ball_images[self.ID], (self.size*self.scaler, self.size*self.scaler)) #makes ball smaller slowly
-					if self.scaler > 0.9:
-						self.brightness -= 15
-						if type(hole) == Goal:
-							self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
-							self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
-						else:
-							self.image.fill((self.brightness, self.brightness, self.brightness, 255), None, pygame.BLEND_RGBA_MULT)
+			np_self = np.asarray(self.get_centre())
+			np_hole = np.asarray([hole.pos[0] + hole.rect.center[0], hole.pos[1] + hole.rect.center[1]])
+			line = np_self - np_hole
+			distance = np.linalg.norm(line)
+			if distance < 30:	#ball centre goes into hole
+				direction = [np_hole[0] - np_self[0], np_hole[1] - np_self[1]]
+				self.vel = [direction[0]*200, direction[1]*200]
+				self.scaler -= 0.01
+				self.image = pygame.transform.smoothscale(ball_images[self.ID], (self.size*self.scaler, self.size*self.scaler)) #makes ball smaller slowly
+				if self.scaler > 0.9:
+					self.brightness -= 15
+					if type(hole) == Goal:
+						self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
+						self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
 					else:
-						self.image.fill((255, 255, 255, 0), None, pygame.BLEND_RGBA_MULT) #hide ball during timeout
-					if self.scaler < 0.8:
-						if type(hole) == Goal:
-							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, radius=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
-					if self.scaler < 0.7:
-						self.__init__(self.ID) #respawn ball
-
+						self.image.fill((self.brightness, self.brightness, self.brightness, 255), None, pygame.BLEND_RGBA_MULT)
+				else:
+					self.image.fill((255, 255, 255, 0), None, pygame.BLEND_RGBA_MULT) #hide ball during timeout
+				if self.scaler < 0.8:
+					if type(hole) == Goal:
+						active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, radius=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
+				if self.scaler < 0.7:
+					if type(hole) == Goal:
+						ball_scores[self.ID] +=10
+						print (self.ID, ball_scores[self.ID])
+						if active_level != level5:
+							self.__init__(self.ID) #respawn ball
+						active_level = update_level(active_level)
+					self.__init__(self.ID) #respawn ball
 
 	# def ball_collision (self):
 	# 	for ball in balls:
@@ -340,7 +346,20 @@ level5_edge_colour = (13, 77, 181)
 level5_goal_colour = (200, 230, 255, 255) #RGBA
 level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, level5_edge_colour, level5_goal_colour)
 
-active_level = level5
+active_level = level1
+
+def update_level(curr_level):
+	if curr_level == level1:
+		return  level2
+	elif curr_level == level2:
+		return level3
+	elif curr_level == level3:
+		return level4
+	elif curr_level == level4:
+		return level5 
+	elif curr_level == level5:
+		pygame.quit()
+
 
 active_balls = 0
 for i in range(4):
