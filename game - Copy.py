@@ -367,11 +367,24 @@ for i in range(4):
 	active_balls += 1
 
 active_particle_systems = []
+def which_level (level_in):
+	if (level_in == level1):
+		return 1
+	elif level_in == level2:
+		return 2
+	elif level_in == level3:
+		return 3
+	elif level_in == level4: 
+		return 4
+	elif level_in == level5:
+		return 5
 
+print(pygame.font.get_fonts())
 running = True
 
 while running:
 	clock.tick(60)
+	
 
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
@@ -450,5 +463,10 @@ while running:
 			if len(system.particles) == 0:
 				active_particle_systems.remove(system)
 			pygame.draw.rect(screen, particle.colour, (particle.pos[0], particle.pos[1], particle.size, particle.size))
+	
+	font = pygame.font.Font(None, 80)
+	what_level = which_level(active_level)
+	text1 = font.render("Level ", True, (0, 0, 0))
+	screen.blit(text1, (500,15))
 
 	pygame.display.update()
