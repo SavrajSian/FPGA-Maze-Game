@@ -379,7 +379,6 @@ def which_level (level_in):
 	elif level_in == level5:
 		return 5
 
-print(pygame.font.get_fonts())
 running = True
 
 while running:
@@ -466,7 +465,8 @@ while running:
 	
 	font = pygame.font.Font(None, 80)
 	what_level = which_level(active_level)
-	text1 = font.render("Level ", True, (0, 0, 0))
+	print (active_level)
+	text1 = font.render("Level ",True, (0, 0, 0))
 	screen.blit(text1, (500,15))
 
 	pygame.display.update()

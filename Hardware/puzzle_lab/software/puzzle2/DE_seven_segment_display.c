@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "alt_types.h"
 #include "sys/times.h"
 #include "altera_avalon_pio_regs.h"
@@ -10,6 +11,11 @@
 #define CLOCKINIT 30005	//Initial speed of the display.  This is a good starting point
 #define UPDATECLOCKAMT 8000	//Incremental amount the display updates by when speeding up or slowing down
 #define QUITLETTER '~' 		// Letter to kill all processing
+
+#include "altera_up_avalon_accelerometer_spi.h"
+#include "altera_avalon_timer_regs.h"
+#include "altera_avalon_timer.h"
+#include "sys/alt_irq.h"
 
 void initializeDisplay();
 void updateText();
@@ -74,9 +80,25 @@ int main(){
   return 0;
 }*/
 
+void send_text(char *text) {
+	char *printMsg;
+	asprintf(&printMsg, "<--> %s <--> \n %c", text, 0x4); 	// Print out the strings
+	alt_putstr(printMsg);
+	free(printMsg);
+	memset(text, 0, 2*CHARLIM);								// Empty the text buffer for next input
+}
+
 void print_text(char *text, const int length) {
 	char *printMsg;
 	asprintf(&printMsg, "<--> Detected %d characters: %s <--> \n %c", length, text, 0x4); 	// Print out the strings
+	alt_putstr(printMsg);
+	free(printMsg);
+	memset(text, 0, 2*CHARLIM);								// Empty the text buffer for next input
+}
+
+void print_accel(char *text) {
+	char *printMsg;
+	asprintf(&printMsg, "<--> Accelerometer data: %s <--> \n %c", text, 0x4); 	// Print out the strings
 	alt_putstr(printMsg);
 	free(printMsg);
 	memset(text, 0, 2*CHARLIM);								// Empty the text buffer for next input
@@ -98,63 +120,181 @@ char generate_text(char curr, int *length, char *text, int *running) {
 	return newCurr;
 }
 
-char read_chars()
-{
-	char text[2*CHARLIM];
+char* read_chars() {
+	char text[2*CHARLIM];									// The buffer for the printing text
 	char prevLetter = '!';
 	int length = 0;
 	int running = 1;
 
-	alt_putstr("Got here 1");
+	while (running) {									// Keep running until QUITLETTER is encountered
+		prevLetter = alt_getchar();							// Extract the first character (and create a hold until one arrives)
+		prevLetter = generate_text(prevLetter, &length, text, &running);		// Process input text
+		//print_text(text, length);							// Print input text
+	}
 
-	prevLetter = alt_getchar();
-
-	alt_putstr("Got here 2");
-
-	prevLetter = generate_text(prevLetter, &length, text, &running);
-	print_text(text,length);
-
-	alt_printf("%s", text);
-	if (strcmp(text,"f") == 0) { alt_printf("gg"); return 'f';}
-	else {return 'n';}
+	return text;
 }
 
-int updateSens(int button, int updated, int sensitivity)
+int updateSens(int button, int updated)
 {
-	if ((updated == 1) && (button != 0b01)) { updated = 0;}
-	if ((updated == 0) && (button == 0b01))
-	{
-		if (sensitivity != 9)
-		{
-			//sensitivity = sensitivity + 1;
-			alt_printf("Sensitivity: %x\n", sensitivity);
-			updated = 1;
-		}
-		else
-		{
-			//sensitivity = 1;
-			alt_printf("Sensitivity: %x\n", sensitivity);
-			updated = 1;
+	if ((updated == 0) && (button == 0b10)) { send_text("B1"); return 1; }
+	return 0;
+}
+int updateB2(int button, int updated)
+{
+	if ((updated == 0) && (button == 0b01)) { send_text("B2"); return 1; }
+	return 0;
+}
+
+void output_switch( int new, int old )
+{
+	char text[2*CHARLIM];
+
+	int x = new^old;
+	int switchnum;
+
+	if ( x != 0 ){
+		for (int i = 1; i < 513; i=i*2){
+			if( x == i ){
+				switchnum = log2(i);
+				if (new>old) 	{ sprintf(text, "SW%d ON\n", switchnum + 1); send_text(text); }
+				else 			{ sprintf(text, "SW%d OFF\n", switchnum + 1); send_text(text); }
+			}
 		}
 	}
-	return updated;
+}
+
+void output_button ( int new, int old)
+{
+	char text[2*CHARLIM];
+
+	int x = new^old;
+
+	if ( x != 0 ){
+		if( x == 1 ){
+			if (new<old) 	{ sprintf(text, "B1 pressed\n"); send_text(text); }
+		}
+		if( x == 2 ){
+			if (new<old) 	{ sprintf(text, "B2 pressed\n"); send_text(text); }
+		}
+		if( x == 3 ){
+			if (old == 1) 		{ sprintf(text, "B1 pressed\n"); send_text(text); }
+			else if (old ==2 ) 	{ sprintf(text, "B2 pressed\n"); send_text(text); }
+		}
+	}
+
+}
+
+void interpret_command(char * command)
+{
+	char text[2*CHARLIM];
+
+	sprintf(text, "IN HERE\n");
+	send_text(text);
+
+	if ( strcmp(command, "W") == 0 )			{ sprintf(text, "IN HERE\n"); send_text(text); }
+	else if ( strcmp(command, "L") == 0 )		{ sprintf(text, "IN HERE2\n"); send_text(text); }
+	else if ( strcmp(command, "LIFE+") == 0 )	{ sprintf(text, "IN HERE3\n"); send_text(text); }
+	else if ( strcmp(command, "LIFE-") == 0 )	{ sprintf(text, "IN HERE4\n"); send_text(text); }
+	else if ( strcmp(command, "p") == 0 )		{ sprintf(text, "IN HERE5\n"); send_text(text); }
+}
+
+#define OFFSET -32
+#define PWM_PERIOD 16
+
+alt_8 pwm = 0;
+alt_u8 led;
+int level;
+
+void led_write(alt_u8 led_pattern) {
+    IOWR(LED_BASE, 0, led_pattern);
+}
+
+void convert_read(alt_32 acc_read, int * level, alt_u8 * led) {
+    acc_read += OFFSET;
+    alt_u8 val = (acc_read >> 6) & 0x07;
+    * led = (8 >> val) | (8 << (8 - val));
+    * level = (acc_read >> 1) & 0x1f;
+}
+
+void sys_timer_isr() {
+    IOWR_ALTERA_AVALON_TIMER_STATUS(TIMER_BASE, 0);
+
+    if (pwm < abs(level)) {
+
+        if (level < 0) {
+            led_write(led << 1);
+        } else {
+            led_write(led >> 1);
+        }
+
+    } else {
+        led_write(led);
+    }
+
+    if (pwm > PWM_PERIOD) {
+        pwm = 0;
+    } else {
+        pwm++;
+    }
+}
+
+void timer_init(void * isr) {
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(TIMER_BASE, 0x0003);
+    IOWR_ALTERA_AVALON_TIMER_STATUS(TIMER_BASE, 0);
+    IOWR_ALTERA_AVALON_TIMER_PERIODL(TIMER_BASE, 0x0900);
+    IOWR_ALTERA_AVALON_TIMER_PERIODH(TIMER_BASE, 0x0000);
+    alt_irq_register(TIMER_IRQ, 0, isr);
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(TIMER_BASE, 0x0007);
 }
 
 int main(){
 
-	char mode = read_chars();
-
-	int sensitivity = 1;
-	int updated = 0;
-
-	while (1)
-	{
-		updated = updateSens(IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE), updated, sensitivity);
-		//alt_printf("Mode: %s\n", mode);
+	// ACCELEROMTER
+	alt_32 x_read;
+	alt_up_accelerometer_spi_dev * acc_dev;
+	acc_dev = alt_up_accelerometer_spi_open_dev("/dev/accelerometer_spi");
+	if (acc_dev == NULL) { // if return 1, check if the spi ip name is "accelerometer_spi"
+		return 1;
 	}
 
-	// IMPORTANT: In order to get this working, i went to NIOS II -> BSP editor -> settings ->enable_small_c_library and unchecked it.
-	// This uses more space on FPGA
+	timer_init(sys_timer_isr);
+
+	char to_text[2*CHARLIM];
+	char input_command[2*CHARLIM];
+
+	// SWITCH
+	int switch_datain, switch_data_old = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
+	// BUTTON
+	int button_datain, button_data_old = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
+
+	while (1) {
+
+		/* <--> SENDING DATA <--> */
+
+		alt_up_accelerometer_spi_read_x_axis(acc_dev, & x_read);
+		sprintf(to_text, "%x", x_read);
+		//print_accel(to_text);
+
+		//SWITCH
+		switch_datain = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
+		output_switch( switch_datain, switch_data_old );
+		switch_data_old = switch_datain;
+
+		// BUTTON
+		button_datain = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
+		output_button( button_datain, button_data_old );
+		button_data_old = button_datain;
+
+		/* <--> RECIEVING DATA <--> */
+		//sprintf(input_command, "%s", read_chars());
+		//send_text("HERE2");
+		//interpret_command( "W" );
+
+		//sprintf(to_text, "Got read thing: %s\n", read_chars());
+		//send_text(to_text);
+
+	}
 
 	return 0;
 }
