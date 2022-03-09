@@ -193,7 +193,7 @@ void interpret_command(char * command)
 	send_text(text);
 
 	if ( strcmp(command, "W") == 0 )			{ sprintf(text, "IN HERE\n"); send_text(text); }
-	else if ( strcmp(command, "L") == 0 )		{ sprintf(text, "IN HERE2\n"); send_text(text); }
+	else if ( strcmp(command, "W") == 0 )		{ sprintf(text, "IN HERE2\n"); send_text(text); }
 	else if ( strcmp(command, "LIFE+") == 0 )	{ sprintf(text, "IN HERE3\n"); send_text(text); }
 	else if ( strcmp(command, "LIFE-") == 0 )	{ sprintf(text, "IN HERE4\n"); send_text(text); }
 	else if ( strcmp(command, "p") == 0 )		{ sprintf(text, "IN HERE5\n"); send_text(text); }
