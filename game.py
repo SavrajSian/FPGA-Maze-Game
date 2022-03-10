@@ -501,21 +501,24 @@ game_socket.settimeout(0.01)
 connection = True
 try: game_socket.connect((server_name, server_port))
 except: connection = False
-data = "F"
+data = 0
 
 print(f"Connected: {connection}")
 
 def network ():
+	global data
 	try:
 		msg = game_socket.recv(1024)
+		msg = message.decode()
 		print(msg)
 	except:
 		pass
 	try:
-		game_socket.send(data.encode())
+		game_socket.send(str(data).encode())
 		print(f"sent {data}")
-	except:
-		pass
+		data += 1
+	except Exception as e:
+		print(e)
 
 if __name__ == "__main__":
 	i = 0

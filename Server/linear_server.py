@@ -11,11 +11,13 @@ def on_new_client_recv(connection_socket, caddr):
         pass
 
 def on_new_client_send(connection_socket, caddr):
-    cmsg = "Hi"
+    global cmsg
     try:
-        connection_socket.send(cmsg.encode())
+        connection_socket.send(str(cmsg).encode())
+        print(f"sent {str(cmsg)}")
     except:
         pass
+    cmsg += 1
 
 server_port = 12000
 server_ip = 'localhost'
@@ -23,6 +25,7 @@ server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((server_ip,server_port))
 server_socket.settimeout(0.01)
 server_socket.listen(5)
+cmsg = 10
 
 print('Server running on port ', server_port)
 
