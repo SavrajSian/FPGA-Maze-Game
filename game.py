@@ -1,6 +1,7 @@
 import pygame, pygame.gfxdraw
 import math, time, random
 import numpy as np
+import socket
 
 pygame.init()
 
@@ -45,14 +46,14 @@ class Ball:
 		return [self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]] #centre on global coords
 
 	def motion_calc (self, dt):
-		ball.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
-		ball.vel[1] += self.acc[1]*dt/self.damping
+		self.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
+		self.vel[1] += self.acc[1]*dt/self.damping
 
-		ball.vel[0] = self.vel[0]*friction
-		ball.vel[1] = self.vel[1]*friction
+		self.vel[0] = self.vel[0]*friction
+		self.vel[1] = self.vel[1]*friction
 
-		ball.pos[0] += self.vel[0]*dt
-		ball.pos[1] += self.vel[1]*dt
+		self.pos[0] += self.vel[0]*dt
+		self.pos[1] += self.vel[1]*dt
 
 	def frame_collision (self):
 		if self.get_centre()[0] - self.rect.center[0] < 82:		#left hitbox
@@ -393,14 +394,11 @@ t0 = time.time()
 
 running = True
 
-while running:
+def GUI_loop ():
+	global running, t, t0
 	clock.tick(60)	#keeps framerate at 60fps at most
 	t += time.time() - t0	#keeps track of seconds elapsed since level start
 	t0 = time.time()
-
-	for event in pygame.event.get():	#close button
-		if event.type == pygame.QUIT:
-			running = False
 
 	screen.fill(active_level.bg_colour)
 
@@ -490,3 +488,39 @@ while running:
 		screen.blit(text1, (560,10))
 
 	pygame.display.update()
+
+	for event in pygame.event.get():	#close button
+		if event.type == pygame.QUIT:
+			running = False
+
+
+server_name = 'localhost'
+server_port = 12000
+game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+game_socket.settimeout(0.01)
+connection = True
+try: game_socket.connect((server_name, server_port))
+except: connection = False
+data = "F"
+
+print(f"Connected: {connection}")
+
+def network ():
+	try:
+		msg = game_socket.recv(1024)
+		print(msg)
+	except:
+		pass
+	try:
+		game_socket.send(data.encode())
+		print(f"sent {data}")
+	except:
+		pass
+
+if __name__ == "__main__":
+	i = 0
+	while running:
+		if i%5 == 0:
+			network()
+		i += 1
+		GUI_loop()
