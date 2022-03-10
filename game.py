@@ -377,10 +377,8 @@ level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, lev
 
 active_level = level1
 
-active_balls = 0
-for i in range(4):
-	balls[i] = Ball(i)
-	active_balls += 1
+# for i in range(4):
+# 	balls[i] = Ball(i)
 
 active_particle_systems = []
 
@@ -423,39 +421,55 @@ def GUI_loop ():
 
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_w]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_s]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_d]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_a]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_UP]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_DOWN]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_RIGHT]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_LEFT]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_i]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_k]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_l]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_j]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_KP5]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_KP2]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_KP3]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_KP1]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[0] = hex_to_dec("CCCCCCCC")
 
 	for ball in balls:
@@ -506,7 +520,10 @@ data = 0
 print(f"Connected: {connection}")
 
 def network ():
-	global data
+	global data, connection
+	if connection == False:
+		try: game_socket.connect((server_name, server_port))
+		except: connection = False
 	try:
 		msg = game_socket.recv(1024)
 		msg = message.decode()
@@ -517,8 +534,8 @@ def network ():
 		game_socket.send(str(data).encode())
 		print(f"sent {data}")
 		data += 1
-	except Exception as e:
-		print(e)
+	except:
+		pass
 
 if __name__ == "__main__":
 	i = 0

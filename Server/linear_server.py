@@ -5,8 +5,9 @@ def on_new_client_recv(connection_socket, caddr):
     try:
         cmsg = connection_socket.recv(1024)
         cmsg = cmsg.decode()
-        if cmsg != "":
-            print(cmsg)
+        if cmsg == "":
+            connection_socket.close()
+        print(cmsg)
     except:
         pass
 
