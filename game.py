@@ -377,9 +377,6 @@ level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, lev
 
 active_level = level1
 
-# for i in range(4):
-# 	balls[i] = Ball(i)
-
 active_particle_systems = []
 
 titlefont = pygame.font.SysFont('interextrabeta', 200)
@@ -415,13 +412,9 @@ def GUI_loop ():
 	goal_centre = [active_level.holes[0].pos[0] + 60, active_level.holes[0].pos[1] + 60]
 	screen.blit(active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
 
-	for ball in balls:
-		if ball != None:
-			ball.acc = [0,0]	#set acceleration to 0 if no key pressed
-
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_w]:
-		if balls[0] == None: balls[0] = Ball(0)
+		if balls[0] == None: balls[0] = Ball(0) #Spawn ball if doesn't exist
 		balls[0].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_s]:
 		if balls[0] == None: balls[0] = Ball(0)
@@ -481,6 +474,10 @@ def GUI_loop ():
 			if t > 2:	#Determines when to give players control
 				ball.motion_calc(dt)
 
+	for ball in balls:
+		if ball != None:
+			ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
+
 	if t > 0.5 and t < 2.5: #Title stream
 		y = random.randint(340, 380)+np.sin(15*t)*40
 		active_particle_systems.append(ParticleSystem(particle_no=200, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", angle=0, size=20))
@@ -510,37 +507,57 @@ def GUI_loop ():
 
 server_name = 'localhost'
 server_port = 12000
-game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-game_socket.settimeout(0.01)
-connection = True
-try: game_socket.connect((server_name, server_port))
-except: connection = False
-data = 0
-
-print(f"Connected: {connection}")
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
+connection = False
+send_msg = "0,33333333:33333333,"
+send_msg_prev = "0,33333333:33333333,"
 
 def network ():
-	global data, connection
+	global recv_msg, send_msg, send_msg_prev, connection
 	if connection == False:
-		try: game_socket.connect((server_name, server_port))
-		except: connection = False
-	try:
-		msg = game_socket.recv(1024)
-		msg = message.decode()
-		print(msg)
-	except:
-		pass
-	try:
-		game_socket.send(str(data).encode())
-		print(f"sent {data}")
-		data += 1
-	except:
-		pass
+		try:
+			try: server_socket.connect((server_name, server_port))
+			except: pass
+			server_socket.send("I'm the game".encode())
+			print("Connected")
+			connection = True
+		except:
+			pass
+	else: #connected
+		received = False
+		try:
+			recv_msg = server_socket.recv(1024).decode()
+			print(f"received {send_msg}")
+			received = True
+		except:
+			pass
+		if received:
+			sender = recv_msg.split(',')[0]
+			if sender == "s":
+				pass #server messages
+			else: #FPGA messages
+				try:
+					acc0 = recv_msg.split(',')[1].split(":")[0]
+					balls[int(sender)].acc[0] = hex_to_dec(acc0)
+					acc1 = recv_msg.split(',')[1].split(":")[1]
+					balls[int(sender)].acc[1] = hex_to_dec(acc1)
+					print(balls[int(sender)].acc)
+				except:
+					pass
+		
+		if send_msg == send_msg_prev: #Check whether to send ######################
+			try:
+				server_socket.send(send_msg.encode())
+				print(f"sent {send_msg}")
+			except:
+				pass
+		send_msg_prev = send_msg
 
 if __name__ == "__main__":
 	i = 0
 	while running:
-		if i%5 == 0:
+		if i%5 == 0: #Make networking infrequent to reduce lag
 			network()
 		i += 1
 		GUI_loop()

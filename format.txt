@@ -2,12 +2,17 @@ To game:
 slot 1: [sender]
 0 1 2 3 s 
 slot 2: [dedicated]
-(FFFFFFFF,FFFFFFFF)
+FFFFFFFF:FFFFFFFF
 slot 3:
 b1 b2 sw=A600 scores={}
 
 From game:
+"I'm the game" (identifier)
+OR
 slot1: [receiver]
 0 1 2 3 s 
 slot 2:
 LED= 7SEG= scores={}
+
+
+slot1,slot2,slot3,...
