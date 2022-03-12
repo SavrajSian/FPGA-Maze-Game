@@ -545,7 +545,7 @@ def network ():
 					print(balls[int(sender)].acc)
 				except:
 					pass
-		
+                #shouldn't this be !=
 		if send_msg == send_msg_prev: #Check whether to send ######################
 			try:
 				server_socket.send(send_msg.encode())

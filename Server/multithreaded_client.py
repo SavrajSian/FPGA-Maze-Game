@@ -38,6 +38,6 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((server_name, server_port))
 
 #some work
-threading.Thread(target=send_data, args=(client_socket,"1")).start()
+threading.Thread(target=send_data, args=(client_socket,"sheesh")).start()
 threading.Thread(target=recv_data, args=(client_socket,)).start()
 
