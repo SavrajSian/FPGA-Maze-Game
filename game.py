@@ -1,7 +1,6 @@
 import pygame, pygame.gfxdraw
 import math, time, random
 import numpy as np
-import socket
 
 pygame.init()
 
@@ -46,14 +45,14 @@ class Ball:
 		return [self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]] #centre on global coords
 
 	def motion_calc (self, dt):
-		self.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
-		self.vel[1] += self.acc[1]*dt/self.damping
+		ball.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
+		ball.vel[1] += self.acc[1]*dt/self.damping
 
-		self.vel[0] = self.vel[0]*friction
-		self.vel[1] = self.vel[1]*friction
+		ball.vel[0] = self.vel[0]*friction
+		ball.vel[1] = self.vel[1]*friction
 
-		self.pos[0] += self.vel[0]*dt
-		self.pos[1] += self.vel[1]*dt
+		ball.pos[0] += self.vel[0]*dt
+		ball.pos[1] += self.vel[1]*dt
 
 	def frame_collision (self):
 		if self.get_centre()[0] - self.rect.center[0] < 82:		#left hitbox
@@ -141,7 +140,6 @@ class Ball:
 						if type(hole) == Goal:
 							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
 					if self.scaler < 0.7:
-						# if ball 1 has gone in first then it gets 40 points 
 						if type(hole) == Goal:
 							global first 
 							first =  False 
@@ -156,16 +154,28 @@ class Ball:
 									second = True
 								if ball_scores[i] == 20:
 									third = True
-							if(first):# has first place happened? 
-								if (second): # 1st place is done but has second place happened?  
-									if (third): # ist and second are done, has 3rd place happened?
-										ball_scores[self.ID] +=10 # you get 10 points for 4th place.
+							if(first):
+								if (second): 
+									if (third): 
+										ball_scores[self.ID] +=10
+									#	self.brightness = 0
+									#	self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
+									#	self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
 									else:
-										ball_scores[self.ID] +=20 # if third place hasn't been taken then you get 20. 
+										ball_scores[self.ID] +=20
+									#	self.brightness = 0
+									#	self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
+									#	self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
 								else:
 									ball_scores[self.ID] += 30 
+									#self.brightness = 0 
+									#self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
+									#self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
 							else: 
-								ball_scores[self.ID] +=40 # if first place hasn't happened you get 40
+								ball_scores[self.ID] +=40 
+								#self.brightness = 0
+								#self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
+								#self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
 							print ("0", ball_scores[0] )
 							print ("1", ball_scores[1])
 							print ("2", ball_scores[2] )
@@ -173,7 +183,7 @@ class Ball:
 							if active_level != level5:
 								self.__init__(self.ID) #respawn ball
 								if ((ball_scores[0] !=0) and (ball_scores[1] !=0) and (ball_scores[2] !=0) and (ball_scores[3] !=0)):
-									active_level = update_level(active_level) # update level when all the balls have passed through the goal hole. 
+									active_level = update_level(active_level) 
 						elif type(hole) != Goal:
 							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
 
@@ -383,8 +393,8 @@ level4_goal_colour = (255, 230, 200, 255) #RGBA
 level4 = Level(level4_blocks, level4_holes, level4_colour, level4_bg_colour, level4_edge_colour, level4_goal_colour)
 
 level5_blocks = [(300, 50, 60, 120),
-		(200, 300, 60, 400),
-		(500, 50, 60, 320),
+				(200, 300, 60, 400),
+				(500, 50, 60, 320),
                 (500, 550, 60, 100),
                 (800, 550, 60, 100),
                 (900, 300, 340, 60)]
@@ -404,6 +414,11 @@ level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, lev
 
 active_level = level1
 
+active_balls = 0
+for i in range(4):
+	balls[i] = Ball(i)
+	active_balls += 1
+
 active_particle_systems = []
 
 titlefont = pygame.font.SysFont('interextrabeta', 200)
@@ -416,11 +431,14 @@ t0 = time.time()
 
 running = True
 
-def GUI_loop ():
-	global running, t, t0
+while running:
 	clock.tick(60)	#keeps framerate at 60fps at most
 	t += time.time() - t0	#keeps track of seconds elapsed since level start
 	t0 = time.time()
+
+	for event in pygame.event.get():	#close button
+		if event.type == pygame.QUIT:
+			running = False
 
 	screen.fill(active_level.bg_colour)
 
@@ -439,47 +457,38 @@ def GUI_loop ():
 	goal_centre = [active_level.holes[0].pos[0] + 60, active_level.holes[0].pos[1] + 60]
 	screen.blit(active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
 
+	for ball in balls:
+		if ball != None:
+			ball.acc = [0,0]	#set acceleration to 0 if no key pressed
+
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_w]:
-		if balls[0] == None: balls[0] = Ball(0) #Spawn ball if doesn't exist
 		balls[0].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_s]:
-		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_d]:
-		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_a]:
-		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_UP]:
-		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_DOWN]:
-		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_RIGHT]:
-		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_LEFT]:
-		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_i]:
-		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_k]:
-		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_l]:
-		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_j]:
-		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("CCCCCCCC")
 
-<<<<<<< HEAD
 	if keys[pygame.K_g]:
 		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_b]:
@@ -487,19 +496,6 @@ def GUI_loop ():
 	if keys[pygame.K_n]:
 		balls[3].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_v]:
-=======
-	if keys[pygame.K_KP5]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_KP2]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_KP3]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_KP1]:
-		if balls[3] == None: balls[3] = Ball(3)
->>>>>>> f0519b32fcb8ef99689e311e303e5b82e25cad66
 		balls[3].acc[0] = hex_to_dec("CCCCCCCC")
 
 	for ball in balls:
@@ -510,10 +506,6 @@ def GUI_loop ():
 			screen.blit(ball.image, (ball.pos[0], ball.pos[1]))
 			if t > 2:	#Determines when to give players control
 				ball.motion_calc(dt)
-
-	for ball in balls:
-		if ball != None:
-			ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
 
 	if t > 0.5 and t < 2.5: #Title stream
 		y = random.randint(340, 380)+np.sin(15*t)*40
@@ -534,70 +526,14 @@ def GUI_loop ():
 		what_level = which_level(active_level)
 		text1 = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
 		screen.blit(text1, (560,10))
+		score_font = pygame.font.Font(None, 30)
+		ball1_text = score_font.render("Ball 1 : " + str(ball_scores[0]), True, (255, 0, 0))
+		screen.blit(ball1_text, (100,10))
+		ball2_text = score_font.render("Ball 2 : " + str(ball_scores[1]), True, (255, 0, 0))
+		screen.blit(ball2_text, (300,10))
+		ball3_text = score_font.render("Ball 3 : " + str(ball_scores[2]), True, (255, 0, 0))
+		screen.blit(ball3_text, (700,10))
+		ball4_text = score_font.render("Ball 4 : " + str(ball_scores[3]), True, (255, 0, 0))
+		screen.blit(ball4_text, (900,10))
 
 	pygame.display.update()
-<<<<<<< HEAD
-=======
-
-	for event in pygame.event.get():	#close button
-		if event.type == pygame.QUIT:
-			running = False
-
-
-server_name = 'localhost'
-server_port = 12000
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
-connection = False
-send_msg = "0,33333333:33333333,"
-send_msg_prev = "0,33333333:33333333,"
-
-def network ():
-	global recv_msg, send_msg, send_msg_prev, connection
-	if connection == False:
-		try:
-			try: server_socket.connect((server_name, server_port))
-			except: pass
-			server_socket.send("I'm the game".encode())
-			print("Connected")
-			connection = True
-		except:
-			pass
-	else: #connected
-		received = False
-		try:
-			recv_msg = server_socket.recv(1024).decode()
-			print(f"received {send_msg}")
-			received = True
-		except:
-			pass
-		if received:
-			sender = recv_msg.split(',')[0]
-			if sender == "s":
-				pass #server messages
-			else: #FPGA messages
-				try:
-					acc0 = recv_msg.split(',')[1].split(":")[0]
-					balls[int(sender)].acc[0] = hex_to_dec(acc0)
-					acc1 = recv_msg.split(',')[1].split(":")[1]
-					balls[int(sender)].acc[1] = hex_to_dec(acc1)
-					print(balls[int(sender)].acc)
-				except:
-					pass
-                #shouldn't this be !=
-		if send_msg == send_msg_prev: #Check whether to send ######################
-			try:
-				server_socket.send(send_msg.encode())
-				print(f"sent {send_msg}")
-			except:
-				pass
-		send_msg_prev = send_msg
-
-if __name__ == "__main__":
-	i = 0
-	while running:
-		if i%5 == 0: #Make networking infrequent to reduce lag
-			network()
-		i += 1
-		GUI_loop()
->>>>>>> f0519b32fcb8ef99689e311e303e5b82e25cad66
