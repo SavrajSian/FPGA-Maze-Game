@@ -141,14 +141,41 @@ class Ball:
 						if type(hole) == Goal:
 							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
 					if self.scaler < 0.7:
+						# if ball 1 has gone in first then it gets 40 points 
 						if type(hole) == Goal:
-							ball_scores[self.ID] +=10
-							#print (self.ID, ball_scores[self.ID])
+							global first 
+							first =  False 
+							global second 
+							second = False 
+							global third 
+							third = False
+							for i in range (4):
+								if ball_scores[i] == 40: 
+									first = True
+								if ball_scores[i] == 30:
+									second = True
+								if ball_scores[i] == 20:
+									third = True
+							if(first):# has first place happened? 
+								if (second): # 1st place is done but has second place happened?  
+									if (third): # ist and second are done, has 3rd place happened?
+										ball_scores[self.ID] +=10 # you get 10 points for 4th place.
+									else:
+										ball_scores[self.ID] +=20 # if third place hasn't been taken then you get 20. 
+								else:
+									ball_scores[self.ID] += 30 
+							else: 
+								ball_scores[self.ID] +=40 # if first place hasn't happened you get 40
+							print ("0", ball_scores[0] )
+							print ("1", ball_scores[1])
+							print ("2", ball_scores[2] )
+							print ("3", ball_scores[3] )
 							if active_level != level5:
 								self.__init__(self.ID) #respawn ball
-							active_level = update_level(active_level)
-						else:
-							self.__init__(self.ID) #respawn ball
+								if ((ball_scores[0] !=0) and (ball_scores[1] !=0) and (ball_scores[2] !=0) and (ball_scores[3] !=0)):
+									active_level = update_level(active_level) # update level when all the balls have passed through the goal hole. 
+						elif type(hole) != Goal:
+							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
 
 
 	# def ball_collision (self):
@@ -452,6 +479,15 @@ def GUI_loop ():
 		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("CCCCCCCC")
 
+<<<<<<< HEAD
+	if keys[pygame.K_g]:
+		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
+	if keys[pygame.K_b]:
+		balls[3].acc[1] = hex_to_dec("33333333")
+	if keys[pygame.K_n]:
+		balls[3].acc[0] = hex_to_dec("33333333")
+	if keys[pygame.K_v]:
+=======
 	if keys[pygame.K_KP5]:
 		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
@@ -463,6 +499,7 @@ def GUI_loop ():
 		balls[3].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_KP1]:
 		if balls[3] == None: balls[3] = Ball(3)
+>>>>>>> f0519b32fcb8ef99689e311e303e5b82e25cad66
 		balls[3].acc[0] = hex_to_dec("CCCCCCCC")
 
 	for ball in balls:
@@ -499,6 +536,8 @@ def GUI_loop ():
 		screen.blit(text1, (560,10))
 
 	pygame.display.update()
+<<<<<<< HEAD
+=======
 
 	for event in pygame.event.get():	#close button
 		if event.type == pygame.QUIT:
@@ -561,3 +600,4 @@ if __name__ == "__main__":
 			network()
 		i += 1
 		GUI_loop()
+>>>>>>> f0519b32fcb8ef99689e311e303e5b82e25cad66
