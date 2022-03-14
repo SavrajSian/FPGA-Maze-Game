@@ -1,3 +1,4 @@
+from asyncio import format_helpers
 import pygame, pygame.gfxdraw
 import math, time, random
 import numpy as np
@@ -17,10 +18,11 @@ ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.imag
 ball_colours = [(230, 230, 230), (255, 255, 170), (170, 255, 170), (170, 220, 255)]
 
 ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
-ball_scores = [0,0,0,0]
-
+ball_scores_l1 = [0,0,0,0]
+ball_scores = [0, 0, 0, 0]
+who_has_won = [0,0,0]
 balls = [None, None, None, None]
-
+global firs, second, third, forth
 friction = 0.95 #gradual slowing
 restitution = 0.6 #bounce
 t = 0
@@ -170,40 +172,43 @@ class Ball:
 							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
 					if self.scaler < 0.7:
 						if type(hole) == Goal:
-							global first 
-							first =  False 
-							global second 
-							second = False 
-							global third 
-							third = False
 							for i in range (4):
-								if ball_scores[i] == 40: 
-									first = True
-								if ball_scores[i] == 30:
-									second = True
-								if ball_scores[i] == 20:
-									third = True
-							if(first):# has first place happened? 
-								if (second): # 1st place is done but has second place happened?  
-									if (third): # ist and second are done, has 3rd place happened?
-										ball_scores[self.ID] +=10 # you get 10 points for 4th place.
+								if ball_scores_l1[i] == 40: 
+									who_has_won[0] = 1 # 1st place is taken
+								if ball_scores_l1[i] == 30:
+									who_has_won[1] = 1 # second place is taken
+								if ball_scores_l1[i] == 20:
+									who_has_won[2] = 1 # third place is taken
+							
+							if(who_has_won[0] == 1):
+								if (who_has_won[1] == 1): 
+									if (who_has_won[2] == 1): 
+										ball_scores_l1[self.ID] +=10
+										ball_scores[self.ID] +=10 #append to the main list
 									else:
-										ball_scores[self.ID] +=20 # if third place hasn't been taken then you get 20. 
+										ball_scores_l1[self.ID] +=20
+										ball_scores[self.ID] +=20
 								else:
-									ball_scores[self.ID] += 30 
+									ball_scores_l1[self.ID] += 30
+									ball_scores[self.ID] +=30
 							else: 
-								ball_scores[self.ID] +=40 # if first place hasn't happened you get 40
-							print ("0", ball_scores[0] )
-							print ("1", ball_scores[1])
-							print ("2", ball_scores[2] )
-							print ("3", ball_scores[3] )
-							if active_level != level5:
+								ball_scores_l1[self.ID] +=40
+								ball_scores[self.ID] +=40
+							print(ball_scores_l1)
+							if active_level == level1 or active_level == level2 or active_level==level3 or active_level==level4 or active_level== level5:
 								self.__init__(self.ID) #respawn ball
-								if ((ball_scores[0] !=0) and (ball_scores[1] !=0) and (ball_scores[2] !=0) and (ball_scores[3] !=0)):
-									active_level = update_level(active_level) # update level when all the balls have passed through the goal hole. 
-							update_level()
-						else:
-							self.__init__(self.ID) #respawn ball
+								if who_has_won[0] == 1 and who_has_won[1] == 1 and who_has_won[2]==1:
+									for i in range (3):
+										who_has_won[i] = 0 #reset 
+									for i in range (4):
+										ball_scores_l1[i] = 0 #reset for the next level
+									update_level() 
+									print("after update ball scores l1")
+									print(ball_scores_l1)
+									print("ball scores overall" )
+									print(ball_scores)
+						elif type(hole) != Goal:
+							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
 
 
 	# def ball_collision (self):
@@ -350,7 +355,7 @@ class Particle ():
 		else: 
 			self.pos = [coords[0], coords[1]]
 		if colour == "title":
-			self.colour = (255, max(0, 190-abs(360-self.pos[1])), max(0, 230-abs(360-self.pos[1])/2)) #title gradient
+			self.colour = (255, max(0, 230-abs(360-self.pos[1])/2) , max(0, 190-abs(360-self.pos[1]))) #title gradient
 		elif colour == "transition":
 			random_grey = random.randint(200, 255)
 			self.colour = (random_grey, random_grey, random_grey)
@@ -474,7 +479,6 @@ levelfont = pygame.font.SysFont('interextrabeta', 50, italic=True)
 score_font = pygame.font.Font(None, 30)
 
 t0 = time.time()
-
 running = True
 
 def GUI_loop ():
@@ -484,6 +488,7 @@ def GUI_loop ():
 	t0 = time.time()
 
 	screen.fill(active_level.bg_colour)
+
 
 	for i, block in enumerate(active_level.blocks): #draws parallax
 		draw_parallax(block)
@@ -592,11 +597,11 @@ def GUI_loop ():
 		screen.blit(text1, (560,10))
 		ball1_text = score_font.render("Ball 1 : " + str(ball_scores[0]), True, (255, 0, 0))
 		screen.blit(ball1_text, (100,10))
-		ball2_text = score_font.render("Ball 2 : " + str(ball_scores[1]), True, (255, 0, 0))
+		ball2_text = score_font.render("Ball 2 : " +str(ball_scores[1]), True, (255, 0, 0))
 		screen.blit(ball2_text, (300,10))
 		ball3_text = score_font.render("Ball 3 : " + str(ball_scores[2]), True, (255, 0, 0))
 		screen.blit(ball3_text, (700,10))
-		ball4_text = score_font.render("Ball 4 : " + str(ball_scores[3]), True, (255, 0, 0))
+		ball4_text = score_font.render("Ball 4 : " +str(ball_scores[3]), True, (255, 0, 0))
 		screen.blit(ball4_text, (900,10))
 
 	if level_changing:
