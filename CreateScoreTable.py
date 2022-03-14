@@ -8,21 +8,21 @@ def create_score_table(dynamodb=None):
         TableName='Scores',
         KeySchema=[
             {
-                'AttributeName': 'player',
+                'AttributeName': 'Username',
                 'KeyType': 'HASH'  # Partition key
             },
             {
-                'AttributeName': 'score',
+                'AttributeName': 'Score',
                 'KeyType': 'RANGE'  # Sort key
             }
         ],
         AttributeDefinitions=[
             {
-                'AttributeName': 'player',
+                'AttributeName': 'Username',
                 'AttributeType': 'S'
             },
             {
-                'AttributeName': 'score',
+                'AttributeName': 'Score',
                 'AttributeType': 'N'
             },
 
