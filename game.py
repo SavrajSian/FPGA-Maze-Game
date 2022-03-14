@@ -170,10 +170,37 @@ class Ball:
 							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
 					if self.scaler < 0.7:
 						if type(hole) == Goal:
-							ball_scores[self.ID] +=10
-							#print (self.ID, ball_scores[self.ID])
+							global first 
+							first =  False 
+							global second 
+							second = False 
+							global third 
+							third = False
+							for i in range (4):
+								if ball_scores[i] == 40: 
+									first = True
+								if ball_scores[i] == 30:
+									second = True
+								if ball_scores[i] == 20:
+									third = True
+							if(first):# has first place happened? 
+								if (second): # 1st place is done but has second place happened?  
+									if (third): # ist and second are done, has 3rd place happened?
+										ball_scores[self.ID] +=10 # you get 10 points for 4th place.
+									else:
+										ball_scores[self.ID] +=20 # if third place hasn't been taken then you get 20. 
+								else:
+									ball_scores[self.ID] += 30 
+							else: 
+								ball_scores[self.ID] +=40 # if first place hasn't happened you get 40
+							print ("0", ball_scores[0] )
+							print ("1", ball_scores[1])
+							print ("2", ball_scores[2] )
+							print ("3", ball_scores[3] )
 							if active_level != level5:
 								self.__init__(self.ID) #respawn ball
+								if ((ball_scores[0] !=0) and (ball_scores[1] !=0) and (ball_scores[2] !=0) and (ball_scores[3] !=0)):
+									active_level = update_level(active_level) # update level when all the balls have passed through the goal hole. 
 							update_level()
 						else:
 							self.__init__(self.ID) #respawn ball
@@ -444,6 +471,7 @@ title = titlefont.render("Title", True, (255,255,255))
 title_rect = title.get_rect()
 title_rect.center = (640, 360)
 levelfont = pygame.font.SysFont('interextrabeta', 50, italic=True)
+score_font = pygame.font.Font(None, 30)
 
 t0 = time.time()
 
@@ -512,16 +540,16 @@ def GUI_loop ():
 		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("CCCCCCCC")
 
-	if keys[pygame.K_KP5]:
+	if keys[pygame.K_g]:
 		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_KP2]:
+	if keys[pygame.K_b]:
 		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_KP3]:
+	if keys[pygame.K_n]:
 		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_KP1]:
+	if keys[pygame.K_v]:
 		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[0] = hex_to_dec("CCCCCCCC")
 
@@ -562,6 +590,14 @@ def GUI_loop ():
 		what_level = which_level(active_level) #Displays "Level X"
 		text1 = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
 		screen.blit(text1, (560,10))
+		ball1_text = score_font.render("Ball 1 : " + str(ball_scores[0]), True, (255, 0, 0))
+		screen.blit(ball1_text, (100,10))
+		ball2_text = score_font.render("Ball 2 : " + str(ball_scores[1]), True, (255, 0, 0))
+		screen.blit(ball2_text, (300,10))
+		ball3_text = score_font.render("Ball 3 : " + str(ball_scores[2]), True, (255, 0, 0))
+		screen.blit(ball3_text, (700,10))
+		ball4_text = score_font.render("Ball 4 : " + str(ball_scores[3]), True, (255, 0, 0))
+		screen.blit(ball4_text, (900,10))
 
 	if level_changing:
 		level_change() #keeps doing this until it sets the variable to false

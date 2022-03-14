@@ -1,5 +1,6 @@
 import subprocess
 import socket
+import time
 
 def send_on_jtag(msg):
     #assert len(msg)>=1, "Please make the cmd a single character"
@@ -18,7 +19,7 @@ server_port = 12000
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
 connection = False
-send_msg = "0,33333333:33333333,"
+send_msg = "0,33333333:33333333,\n"
 
 def network():
     global recv_msg, send_msg, connection
@@ -32,29 +33,27 @@ def network():
             except:
                     pass
     else: #connected
-            received = False
             try:
-                    recv_msg = client_socket.recv(1024).decode()
-                    print(f"received {send_msg}")
-                    received = True
+                recv_msg = client_socket.recv(1024).decode()
+                print(f"received {send_msg}")
+                sender = recv_msg.split(',')[0]
+                if sender == "s":
+                        pass #server messages
+                else: #??? messages
+                        try:
+                            pass    #???
+                        except:
+                                pass
+            except:
+                pass
+            try:
+                    client_socket.send(send_msg.encode())
+                    print(f"sent {send_msg}")
             except:
                     pass
-            if received:
-                    sender = recv_msg.split(',')[0]
-                    if sender == "s":
-                            pass #server messages
-                    else: #??? messages
-                            try:
-                                    #???
-                            except:
-                                    pass
-                    try:
-                            client_socket.send(send_msg.encode())
-                            print(f"sent {send_msg}")
-                    except:
-                            pass
             send_msg_prev = send_msg
 
+print(f"Attempting to connect to {server_name}...")
 while True:
     network()
 

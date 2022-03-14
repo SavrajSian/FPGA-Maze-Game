@@ -1,4 +1,6 @@
 To game:
+"I'm an FPGA" (identifier)
+OR
 slot 1: [sender]
 0 1 2 3 s 
 slot 2: [dedicated]
