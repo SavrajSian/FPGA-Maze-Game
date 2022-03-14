@@ -1,6 +1,7 @@
 import pygame, pygame.gfxdraw
 import math, time, random
 import numpy as np
+import socket
 
 pygame.init()
 
@@ -20,8 +21,8 @@ ball_scores = [0,0,0,0]
 
 balls = [None, None, None, None]
 
-friction = 0.95
-restitution = 0.6
+friction = 0.95 #gradual slowing
+restitution = 0.6 #bounce
 t = 0
 dt = 0.001
 clock = pygame.time.Clock()
@@ -36,23 +37,50 @@ class Ball:
 		self.colour = ball_colours[ID]
 		self.image = ball_images[ID].copy()
 		self.rect = self.image.get_rect()
-		self.size = 40
+		self.size = 45
 		self.halfsize = 20
-		self.scaler = 1
+		self.scaler = 1.0
 		self.brightness = 255
+		self.respawn_timer = 20 #ms
+
+	def respawn_animation (self):
+		if self.respawn_timer == 20:
+			self.pos[0] -= 10 #fixes ball drawn from top left
+			self.pos[1] -= 10
+			self.scaler = 1.9
+		elif self.respawn_timer > 10:
+			self.pos[0] += 2
+			self.pos[1] += 2
+			self.scaler -= 0.1
+		elif self.respawn_timer > 5:
+			if self.respawn_timer == 10:
+				active_particle_systems.append(ParticleSystem(particle_no=20, colour=self.colour, lifetime=0.5, distance=200, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
+			self.pos[0] -= 1
+			self.pos[1] -= 1
+			self.scaler += 0.1
+		else:
+			self.pos[0] += 1
+			self.pos[1] += 1
+			self.scaler -= 0.1
+			if self.respawn_timer == 1:
+				active_particle_systems.append(ParticleSystem(particle_no=10, colour=self.colour, lifetime=0.5, distance=100, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
+		self.scaler = round(self.scaler, 2)
+		self.respawn_timer = max(0, self.respawn_timer - 1)
+		self.image = pygame.transform.smoothscale(ball_images[self.ID].copy(), (self.size*self.scaler, self.size*self.scaler))
+
 
 	def get_centre (self):
 		return [self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]] #centre on global coords
 
 	def motion_calc (self, dt):
-		ball.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
-		ball.vel[1] += self.acc[1]*dt/self.damping
+		self.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
+		self.vel[1] += self.acc[1]*dt/self.damping
 
-		ball.vel[0] = self.vel[0]*friction
-		ball.vel[1] = self.vel[1]*friction
+		self.vel[0] = self.vel[0]*friction
+		self.vel[1] = self.vel[1]*friction
 
-		ball.pos[0] += self.vel[0]*dt
-		ball.pos[1] += self.vel[1]*dt
+		self.pos[0] += self.vel[0]*dt
+		self.pos[1] += self.vel[1]*dt
 
 	def frame_collision (self):
 		if self.get_centre()[0] - self.rect.center[0] < 82:		#left hitbox
@@ -83,7 +111,7 @@ class Ball:
 			   (self.get_centre()[0] - self.halfsize < block.rect.left + 20) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.top + 15) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.bottom - 15):
-				self.pos[0] = block.rect.left - self.size - 3
+				self.pos[0] = block.rect.left - self.size + 2
 				self.vel[0] = -self.vel[0]*restitution
 				if abs(self.vel[0]) > 1000:
 					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
@@ -101,7 +129,7 @@ class Ball:
 			   (self.get_centre()[0] - self.halfsize < block.rect.right - 5) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.top) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.top + 20):
-				self.pos[1] = block.rect.top - self.size - 2
+				self.pos[1] = block.rect.top - self.size + 2
 				self.vel[1] = -self.vel[1]*restitution
 				if abs(self.vel[1]) > 1000:
 					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
@@ -126,9 +154,10 @@ class Ball:
 					direction = [np_hole[0] - np_self[0], np_hole[1] - np_self[1]]
 					self.vel = [direction[0]*200, direction[1]*200]
 					self.scaler -= 0.01
-					self.image = pygame.transform.smoothscale(ball_images[self.ID], (self.size*self.scaler, self.size*self.scaler)) #makes ball smaller slowly
+					self.scaler = round(self.scaler, 2)
+					self.image = pygame.transform.smoothscale(ball_images[self.ID].copy(), (self.size*self.scaler, self.size*self.scaler)) #makes ball smaller slowly
 					if self.scaler > 0.9:
-						self.brightness -= 15
+						self.brightness = max(0, self.brightness - 15)
 						if type(hole) == Goal:
 							self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
 							self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
@@ -141,51 +170,13 @@ class Ball:
 							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
 					if self.scaler < 0.7:
 						if type(hole) == Goal:
-							global first 
-							first =  False 
-							global second 
-							second = False 
-							global third 
-							third = False
-							for i in range (4):
-								if ball_scores[i] == 40: 
-									first = True
-								if ball_scores[i] == 30:
-									second = True
-								if ball_scores[i] == 20:
-									third = True
-							if(first):
-								if (second): 
-									if (third): 
-										ball_scores[self.ID] +=10
-									#	self.brightness = 0
-									#	self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
-									#	self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
-									else:
-										ball_scores[self.ID] +=20
-									#	self.brightness = 0
-									#	self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
-									#	self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
-								else:
-									ball_scores[self.ID] += 30 
-									#self.brightness = 0 
-									#self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
-									#self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
-							else: 
-								ball_scores[self.ID] +=40 
-								#self.brightness = 0
-								#self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
-								#self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
-							print ("0", ball_scores[0] )
-							print ("1", ball_scores[1])
-							print ("2", ball_scores[2] )
-							print ("3", ball_scores[3] )
+							ball_scores[self.ID] +=10
+							#print (self.ID, ball_scores[self.ID])
 							if active_level != level5:
 								self.__init__(self.ID) #respawn ball
-								if ((ball_scores[0] !=0) and (ball_scores[1] !=0) and (ball_scores[2] !=0) and (ball_scores[3] !=0)):
-									active_level = update_level(active_level) 
-						elif type(hole) != Goal:
-							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
+							update_level()
+						else:
+							self.__init__(self.ID) #respawn ball
 
 
 	# def ball_collision (self):
@@ -225,19 +216,37 @@ def hex_to_dec (hex):
 	else:
 		return d - 4294967296 #hFFFFFFFF+1
 
-def update_level(curr_level):
-	if curr_level == level1:
-		return  level2
-	elif curr_level == level2:
-		return level3
-	elif curr_level == level3:
-		return level4
-	elif curr_level == level4:
-		return level5 
-	elif curr_level == level5:
-		pygame.quit()
+def update_level(choice=None): #Done once to determine that level is changing and to which level
+	global t, level_changing, new_level
+	if choice == None:
+		if active_level == level1:
+			new_level = level2
+		elif active_level == level2:
+			new_level = level3
+		elif active_level == level3:
+			new_level = level4
+		elif active_level == level4:
+			new_level = level5 
+		elif active_level == level5:
+			pass######################
+	else:
+		new_level = choice
+	t = 0
+	level_changing = True
 
-def which_level (level_in):
+def level_change (): #Keeps happening until it sets the variable to false
+	global active_level, new_level
+	if t < 0.5:
+		pass
+	elif t < 1:
+		active_particle_systems.append(ParticleSystem(particle_no=500, colour="transition", lifetime=1, distance=8000, coords=[-200, 360], type="stream", distr="unif", angle=0, width=500, size=30))
+	elif t < 2:
+		active_level = new_level
+	else:
+		level_changing = False
+
+
+def which_level (level_in): #turns level name into number
 	if (level_in == level1):
 		return 1
 	elif level_in == level2:
@@ -295,19 +304,31 @@ class Goal (Hole):
 		self.pos = [coords[0], coords[1]]
 
 class ParticleSystem ():
-	def __init__(self, particle_no, colour, lifetime, distance, coords, type="burst", angle=None, size=5, width=60):
+	def __init__(self, particle_no, colour, lifetime, distance, coords, type="burst", distr="gauss", angle=None, size=5, width=60):
 		self.particles = []
 		for i in range(particle_no):
-			self.particles.append(Particle(colour, lifetime, distance, coords, type, angle, size, width))
+			self.particles.append(Particle(colour, lifetime, distance, coords, type, distr, angle, size, width))
 
 class Particle ():
-	def __init__(self, colour, lifetime, distance, coords, type, angle, size, width):
+	def __init__(self, colour, lifetime, distance, coords, type, distr, angle, size, width):
 		self.randomlifetime = random.uniform(lifetime*0.8, lifetime*1.2)
 		self.size = size
 		self.magnitude = random.randint(25, 100) * distance
 		self.angle = random.uniform(0, 2*math.pi) if angle == None else angle #differentiate between burst and stream
-		self.pos = [coords[0], random.gauss(coords[1], width)] if type == "stream" else [coords[0], coords[1]]
-		self.colour = (255, max(0, 190-abs(360-self.pos[1])), max(0, 230-abs(360-self.pos[1])/2)) if colour == "title" else colour #title gradient
+		if type == "stream":
+			if distr == "gauss":
+				self.pos = [coords[0], random.gauss(coords[1], width)]
+			elif distr == "unif":
+				self.pos = [coords[0], random.uniform(coords[1]-width, coords[1]+width)]
+		else: 
+			self.pos = [coords[0], coords[1]]
+		if colour == "title":
+			self.colour = (255, max(0, 190-abs(360-self.pos[1])), max(0, 230-abs(360-self.pos[1])/2)) #title gradient
+		elif colour == "transition":
+			random_grey = random.randint(200, 255)
+			self.colour = (random_grey, random_grey, random_grey)
+		else: 
+			self.colour = colour 
 		self.vel = [self.magnitude*np.cos(self.angle), self.magnitude*np.sin(self.angle)]
 		self.veer = [random.randint(-500, 500), random.randint(-500, 500)] #random turn
 
@@ -393,8 +414,8 @@ level4_goal_colour = (255, 230, 200, 255) #RGBA
 level4 = Level(level4_blocks, level4_holes, level4_colour, level4_bg_colour, level4_edge_colour, level4_goal_colour)
 
 level5_blocks = [(300, 50, 60, 120),
-				(200, 300, 60, 400),
-				(500, 50, 60, 320),
+		(200, 300, 60, 400),
+		(500, 50, 60, 320),
                 (500, 550, 60, 100),
                 (800, 550, 60, 100),
                 (900, 300, 340, 60)]
@@ -414,10 +435,7 @@ level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, lev
 
 active_level = level1
 
-active_balls = 0
-for i in range(4):
-	balls[i] = Ball(i)
-	active_balls += 1
+level_changing = False
 
 active_particle_systems = []
 
@@ -431,71 +449,80 @@ t0 = time.time()
 
 running = True
 
-while running:
+def GUI_loop ():
+	global running, t, t0
 	clock.tick(60)	#keeps framerate at 60fps at most
 	t += time.time() - t0	#keeps track of seconds elapsed since level start
 	t0 = time.time()
 
-	for event in pygame.event.get():	#close button
-		if event.type == pygame.QUIT:
-			running = False
-
 	screen.fill(active_level.bg_colour)
 
-	for i, block in enumerate(active_level.blocks):
+	for i, block in enumerate(active_level.blocks): #draws parallax
 		draw_parallax(block)
 
 	active_level.draw_frame()
 
-	for block in active_level.blocks:
+	for block in active_level.blocks: #draws blocks
 		pygame.draw.rect(screen, active_level.colour, block.rect)
 	
 	screen.blit(vignette, (0, 0))
 
-	for hole in active_level.holes:
+	for hole in active_level.holes: #draws holes
 		screen.blit(hole.image, (hole.pos[0], hole.pos[1]))
 	goal_centre = [active_level.holes[0].pos[0] + 60, active_level.holes[0].pos[1] + 60]
 	screen.blit(active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
 
-	for ball in balls:
-		if ball != None:
-			ball.acc = [0,0]	#set acceleration to 0 if no key pressed
-
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_w]:
-		balls[0].acc[1] = hex_to_dec("CCCCCCCC")
+		if balls[0] == None: balls[0] = Ball(0) #Spawn ball if doesn't exist
+		balls[0].acc[1] = hex_to_dec("CCCCCCCC") #Fake HEX movement of ball for manual override
 	if keys[pygame.K_s]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_d]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_a]:
+		if balls[0] == None: balls[0] = Ball(0)
 		balls[0].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_UP]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_DOWN]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_RIGHT]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_LEFT]:
+		if balls[1] == None: balls[1] = Ball(1)
 		balls[1].acc[0] = hex_to_dec("CCCCCCCC")
 
 	if keys[pygame.K_i]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[1] = hex_to_dec("CCCCCCCC")
 	if keys[pygame.K_k]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[1] = hex_to_dec("33333333")
 	if keys[pygame.K_l]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("33333333")
 	if keys[pygame.K_j]:
+		if balls[2] == None: balls[2] = Ball(2)
 		balls[2].acc[0] = hex_to_dec("CCCCCCCC")
 
-	if keys[pygame.K_g]:
+	if keys[pygame.K_KP5]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_b]:
+	if keys[pygame.K_KP2]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_n]:
+	if keys[pygame.K_KP3]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_v]:
+	if keys[pygame.K_KP1]:
+		if balls[3] == None: balls[3] = Ball(3)
 		balls[3].acc[0] = hex_to_dec("CCCCCCCC")
 
 	for ball in balls:
@@ -504,14 +531,22 @@ while running:
 			ball.block_collision()
 			ball.hole_collision()
 			screen.blit(ball.image, (ball.pos[0], ball.pos[1]))
-			if t > 2:	#Determines when to give players control
-				ball.motion_calc(dt)
+			if ball.respawn_timer == 0:
+				if t > 2:	#Determines when to give players control
+					ball.motion_calc(dt)
+			else:
+				ball.respawn_animation()
 
-	if t > 0.5 and t < 2.5: #Title stream
-		y = random.randint(340, 380)+np.sin(15*t)*40
-		active_particle_systems.append(ParticleSystem(particle_no=200, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", angle=0, size=20))
+	for ball in balls:
+		if ball != None:
+			ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
 
-	for system in active_particle_systems:
+	if active_level == level1 and not level_changing:
+		if t > 0.5 and t < 2.5: #Title stream
+			y = random.randint(340, 380)+np.sin(15*t)*40
+			active_particle_systems.append(ParticleSystem(particle_no=200, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", distr="gauss", angle=0, size=20))
+
+	for system in active_particle_systems: #Draws all particle systems
 		for particle in system.particles:
 			particle.motion(dt)
 			particle.lifetime(system.particles)
@@ -519,21 +554,78 @@ while running:
 				active_particle_systems.remove(system) #delete system if empty
 			pygame.draw.rect(screen, particle.colour, (particle.pos[0], particle.pos[1], particle.size, particle.size)) #draw any particles
 
-	if t > 0.5 and t < 2.5: #Title
-		screen.blit(title, title_rect)
+	if active_level == level1 and not level_changing:
+		if t > 0.5 and t < 2.5: #Title
+			screen.blit(title, title_rect)
 
 	if t > 2.5:
-		what_level = which_level(active_level)
+		what_level = which_level(active_level) #Displays "Level X"
 		text1 = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
 		screen.blit(text1, (560,10))
-		score_font = pygame.font.Font(None, 30)
-		ball1_text = score_font.render("Ball 1 : " + str(ball_scores[0]), True, (255, 0, 0))
-		screen.blit(ball1_text, (100,10))
-		ball2_text = score_font.render("Ball 2 : " + str(ball_scores[1]), True, (255, 0, 0))
-		screen.blit(ball2_text, (300,10))
-		ball3_text = score_font.render("Ball 3 : " + str(ball_scores[2]), True, (255, 0, 0))
-		screen.blit(ball3_text, (700,10))
-		ball4_text = score_font.render("Ball 4 : " + str(ball_scores[3]), True, (255, 0, 0))
-		screen.blit(ball4_text, (900,10))
+
+	if level_changing:
+		level_change() #keeps doing this until it sets the variable to false
 
 	pygame.display.update()
+
+	for event in pygame.event.get():	#close button
+		if event.type == pygame.QUIT:
+			running = False
+
+
+server_name = 'localhost'
+server_port = 12000
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
+connection = False
+send_msg = "0,33333333:33333333,"
+send_msg_prev = "0,33333333:33333333,"
+
+def network ():
+	global recv_msg, send_msg, send_msg_prev, connection
+	if connection == False:
+		try:
+			try: server_socket.connect((server_name, server_port))
+			except: pass
+			server_socket.send("I'm the game".encode()) #Identifies which client is game
+			print("Connected")
+			connection = True
+		except:
+			pass
+	else: #connected
+		received = False
+		try:
+			recv_msg = server_socket.recv(1024).decode()
+			print(f"received {send_msg}")
+			received = True
+		except:
+			pass
+		if received:
+			sender = recv_msg.split(',')[0]
+			if sender == "s":
+				pass #server messages
+			else: #FPGA messages
+				try:
+					acc0 = recv_msg.split(',')[1].split(":")[0]
+					balls[int(sender)].acc[0] = hex_to_dec(acc0)
+					acc1 = recv_msg.split(',')[1].split(":")[1]
+					balls[int(sender)].acc[1] = hex_to_dec(acc1)
+					print(balls[int(sender)].acc)
+				except:
+					pass
+		
+		if send_msg != send_msg_prev: #Check whether to send
+			try:
+				server_socket.send(send_msg.encode())
+				print(f"sent {send_msg}")
+			except:
+				pass
+		send_msg_prev = send_msg
+
+if __name__ == "__main__":
+	i = 0
+	while running: #switches between game and networking
+		if i%5 == 0: #Make networking infrequent to reduce lag
+			network()
+		i += 1
+		GUI_loop()
