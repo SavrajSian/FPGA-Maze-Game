@@ -339,7 +339,7 @@ class Particle ():
 		else: 
 			self.pos = [coords[0], coords[1]]
 		if colour == "title":
-			self.colour = (255, max(0, 230-abs(360-self.pos[1])/2) , max(0, 190-abs(360-self.pos[1]))) #title gradient
+			self.colour = (255, max(0, 245-abs(360-self.pos[1])*0.8) , max(0, 190-abs(360-self.pos[1])*1.7)) #title gradient
 		elif colour == "transition":
 			random_grey = random.randint(200, 255)
 			self.colour = (random_grey, random_grey, random_grey)
@@ -470,8 +470,8 @@ titlefont = pygame.font.SysFont('interextrabeta', 200)
 title = titlefont.render("Title", True, (255,255,255))
 title_rect = title.get_rect()
 title_rect.center = (640, 360)
-levelfont = pygame.font.SysFont('interextrabeta', 50, italic=True)
-score_font = pygame.font.Font(None, 30)
+levelfont = pygame.font.SysFont('interextrabeta', 50)
+score_font = pygame.font.SysFont('interextrabeta', 50)
 
 t = 0
 dt = 0.001
@@ -509,58 +509,6 @@ def GUI_loop ():
 	manual_movement(2, pygame.K_i, pygame.K_k, pygame.K_l, pygame.K_j)
 	manual_movement(3, pygame.K_g, pygame.K_b, pygame.K_n, pygame.K_v)
 
-	# if keys[pygame.K_w]:
-	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0) #Spawn ball if doesn't exist
-	# 	if balls[0] != None: balls[0].acc[1] = hex_to_dec("CCCCCCCC") #Fake HEX movement of ball for manual override
-	# if keys[pygame.K_s]:
-	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0)
-	# 	balls[0].acc[1] = hex_to_dec("33333333")
-	# if keys[pygame.K_d]:
-	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0)
-	# 	balls[0].acc[0] = hex_to_dec("33333333")
-	# if keys[pygame.K_a]:
-	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0)
-	# 	balls[0].acc[0] = hex_to_dec("CCCCCCCC")
-
-	# if keys[pygame.K_UP]:
-	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
-	# 	balls[1].acc[1] = hex_to_dec("CCCCCCCC")
-	# if keys[pygame.K_DOWN]:
-	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
-	# 	balls[1].acc[1] = hex_to_dec("33333333")
-	# if keys[pygame.K_RIGHT]:
-	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
-	# 	balls[1].acc[0] = hex_to_dec("33333333")
-	# if keys[pygame.K_LEFT]:
-	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
-	# 	balls[1].acc[0] = hex_to_dec("CCCCCCCC")
-
-	# if keys[pygame.K_i]:
-	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
-	# 	balls[2].acc[1] = hex_to_dec("CCCCCCCC")
-	# if keys[pygame.K_k]:
-	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
-	# 	balls[2].acc[1] = hex_to_dec("33333333")
-	# if keys[pygame.K_l]:
-	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
-	# 	balls[2].acc[0] = hex_to_dec("33333333")
-	# if keys[pygame.K_j]:
-	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
-	# 	balls[2].acc[0] = hex_to_dec("CCCCCCCC")
-
-	# if keys[pygame.K_g]:
-	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
-	# 	balls[3].acc[1] = hex_to_dec("CCCCCCCC")
-	# if keys[pygame.K_b]:
-	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
-	# 	balls[3].acc[1] = hex_to_dec("33333333")
-	# if keys[pygame.K_n]:
-	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
-	# 	balls[3].acc[0] = hex_to_dec("33333333")
-	# if keys[pygame.K_v]:
-	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
-	# 	balls[3].acc[0] = hex_to_dec("CCCCCCCC")
-
 	for ball in balls:
 		if ball != None:
 			ball.frame_collision()
@@ -596,16 +544,16 @@ def GUI_loop ():
 
 	if t > 2.5:
 		what_level = which_level(Level.active_level) #Displays "Level X"
-		text1 = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
-		screen.blit(text1, (560,10))
-		ball1_text = score_font.render("Ball 1 : " + str(Ball.scores[0]), True, (255, 0, 0))
-		screen.blit(ball1_text, (100,10))
-		ball2_text = score_font.render("Ball 2 : " +str(Ball.scores[1]), True, (255, 0, 0))
-		screen.blit(ball2_text, (300,10))
-		ball3_text = score_font.render("Ball 3 : " + str(Ball.scores[2]), True, (255, 0, 0))
-		screen.blit(ball3_text, (700,10))
-		ball4_text = score_font.render("Ball 4 : " +str(Ball.scores[3]), True, (255, 0, 0))
-		screen.blit(ball4_text, (900,10))
+		level_num = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
+		screen.blit(level_num, (560,10))
+		ball0_text = score_font.render(str(Ball.scores[0]), True, (230, 230, 230))
+		screen.blit(ball0_text, (320,650))
+		ball1_text = score_font.render(str(Ball.scores[1]), True, (240, 240, 90))
+		screen.blit(ball1_text, (520,650))
+		ball2_text = score_font.render(str(Ball.scores[2]), True, (120, 240, 120))
+		screen.blit(ball2_text, (720,650))
+		ball3_text = score_font.render(str(Ball.scores[3]), True, (120, 120, 240))
+		screen.blit(ball3_text, (920,650))
 
 	if Level.changing:
 		level_change() #keeps doing this until it sets the variable to false
