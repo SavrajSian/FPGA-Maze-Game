@@ -18,18 +18,16 @@ ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.imag
 ball_colours = [(230, 230, 230), (255, 255, 170), (170, 255, 170), (170, 220, 255)]
 
 ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
-ball_scores_l1 = [0,0,0,0]
-ball_scores = [0, 0, 0, 0]
-who_has_won = [0,0,0]
+
 balls = [None, None, None, None]
-global firs, second, third, forth
-friction = 0.95 #gradual slowing
-restitution = 0.6 #bounce
-t = 0
-dt = 0.001
-clock = pygame.time.Clock()
 
 class Ball:
+
+	friction = 0.95 #gradual slowing
+	restitution = 0.6 #bounce
+	scores = [0, 0, 0, 0]
+	won = [] #list to determine how many balls have won, and when to change level
+
 	def __init__ (self, ID):
 		self.ID = ID
 		self.acc = [0, 0]
@@ -56,7 +54,7 @@ class Ball:
 			self.scaler -= 0.1
 		elif self.respawn_timer > 5:
 			if self.respawn_timer == 10:
-				active_particle_systems.append(ParticleSystem(particle_no=20, colour=self.colour, lifetime=0.5, distance=200, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
+				ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=self.colour, lifetime=0.5, distance=200, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
 			self.pos[0] -= 1
 			self.pos[1] -= 1
 			self.scaler += 0.1
@@ -65,7 +63,7 @@ class Ball:
 			self.pos[1] += 1
 			self.scaler -= 0.1
 			if self.respawn_timer == 1:
-				active_particle_systems.append(ParticleSystem(particle_no=10, colour=self.colour, lifetime=0.5, distance=100, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
+				ParticleSystem.active_systems.append(ParticleSystem(particle_no=10, colour=self.colour, lifetime=0.5, distance=100, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
 		self.scaler = round(self.scaler, 2)
 		self.respawn_timer = max(0, self.respawn_timer - 1)
 		self.image = pygame.transform.smoothscale(ball_images[self.ID].copy(), (self.size*self.scaler, self.size*self.scaler))
@@ -78,8 +76,8 @@ class Ball:
 		self.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
 		self.vel[1] += self.acc[1]*dt/self.damping
 
-		self.vel[0] = self.vel[0]*friction
-		self.vel[1] = self.vel[1]*friction
+		self.vel[0] = self.vel[0]*Ball.friction
+		self.vel[1] = self.vel[1]*Ball.friction
 
 		self.pos[0] += self.vel[0]*dt
 		self.pos[1] += self.vel[1]*dt
@@ -87,67 +85,66 @@ class Ball:
 	def frame_collision (self):
 		if self.get_centre()[0] - self.rect.center[0] < 82:		#left hitbox
 			self.pos[0] = 82
-			self.vel[0] = -self.vel[0]*restitution
+			self.vel[0] = -self.vel[0]*Ball.restitution
 			if abs(self.vel[0]) > 1000:
-				active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0], self.pos[1] + self.rect.center[1]]))
+				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0], self.pos[1] + self.rect.center[1]]))
 		if self.get_centre()[0] + self.rect.center[0] > 1200:	#right hitbox
 			self.pos[0] = 1156
-			self.vel[0] = -self.vel[0]*restitution
+			self.vel[0] = -self.vel[0]*Ball.restitution
 			if abs(self.vel[0]) > 1000:
-				active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
+				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
 		if self.get_centre()[1] - self.rect.center[1] < 72:		#up hitbox
 			self.pos[1] = 72
-			self.vel[1] = -self.vel[1]*restitution
+			self.vel[1] = -self.vel[1]*Ball.restitution
 			if abs(self.vel[1]) > 1000:
-				active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
+				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
 		if self.get_centre()[1] + self.rect.center[1] > 645:	#down hitbox
 			self.pos[1] = 601
-			self.vel[1] = -self.vel[1]*restitution
+			self.vel[1] = -self.vel[1]*Ball.restitution
 			if abs(self.vel[1]) > 1000:
-				active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
+				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
 
 	def block_collision (self):
-		for block in active_level.blocks:
+		for block in Level.active_level.blocks:
 			#left hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.left - 1) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.left + 20) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.top + 15) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.bottom - 15):
 				self.pos[0] = block.rect.left - self.size + 2
-				self.vel[0] = -self.vel[0]*restitution
+				self.vel[0] = -self.vel[0]*Ball.restitution
 				if abs(self.vel[0]) > 1000:
-					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
+					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
 			#right hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.right - 20) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.right) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.top + 15) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.bottom - 20):
 				self.pos[0] = block.rect.right - 2
-				self.vel[0] = -self.vel[0]*restitution
+				self.vel[0] = -self.vel[0]*Ball.restitution
 				if abs(self.vel[0]) > 1000:
-					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0], self.pos[1] + self.rect.center[1]]))
+					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0], self.pos[1] + self.rect.center[1]]))
 			#up hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.left + 10) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.right - 5) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.top) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.top + 20):
 				self.pos[1] = block.rect.top - self.size + 2
-				self.vel[1] = -self.vel[1]*restitution
+				self.vel[1] = -self.vel[1]*Ball.restitution
 				if abs(self.vel[1]) > 1000:
-					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
+					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
 			#down hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.left + 10) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.right - 5) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.bottom - 20) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.bottom):
 				self.pos[1] = block.rect.bottom - 2
-				self.vel[1] = -self.vel[1]*restitution
+				self.vel[1] = -self.vel[1]*Ball.restitution
 				if abs(self.vel[1]) > 1000:
-					active_particle_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
+					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
 
 	def hole_collision (self):
-		global active_level
-		for hole in active_level.holes:
+		for hole in Level.active_level.holes:
 				np_self = np.asarray(self.get_centre())
 				np_hole = np.asarray([hole.pos[0] + hole.rect.center[0], hole.pos[1] + hole.rect.center[1]])
 				line = np_self - np_hole
@@ -169,45 +166,16 @@ class Ball:
 						self.image.fill((255, 255, 255, 0), None, pygame.BLEND_RGBA_MULT) #hide ball during timeout
 					if self.scaler < 0.8:
 						if type(hole) == Goal:
-							active_particle_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
+							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
 					if self.scaler < 0.7:
 						if type(hole) == Goal:
-							for i in range (4):
-								if ball_scores_l1[i] == 40: 
-									who_has_won[0] = 1 # 1st place is taken
-								if ball_scores_l1[i] == 30:
-									who_has_won[1] = 1 # second place is taken
-								if ball_scores_l1[i] == 20:
-									who_has_won[2] = 1 # third place is taken
-							
-							if(who_has_won[0] == 1):
-								if (who_has_won[1] == 1): 
-									if (who_has_won[2] == 1): 
-										ball_scores_l1[self.ID] +=10
-										ball_scores[self.ID] +=10 #append to the main list
-									else:
-										ball_scores_l1[self.ID] +=20
-										ball_scores[self.ID] +=20
-								else:
-									ball_scores_l1[self.ID] += 30
-									ball_scores[self.ID] +=30
-							else: 
-								ball_scores_l1[self.ID] +=40
-								ball_scores[self.ID] +=40
-							print(ball_scores_l1)
-							if active_level == level1 or active_level == level2 or active_level==level3 or active_level==level4 or active_level== level5:
-								self.__init__(self.ID) #respawn ball
-								if who_has_won[0] == 1 and who_has_won[1] == 1 and who_has_won[2]==1:
-									for i in range (3):
-										who_has_won[i] = 0 #reset 
-									for i in range (4):
-										ball_scores_l1[i] = 0 #reset for the next level
-									update_level() 
-									print("after update ball scores l1")
-									print(ball_scores_l1)
-									print("ball scores overall" )
-									print(ball_scores)
-						elif type(hole) != Goal:
+							Ball.scores[self.ID] += 40 - (len(Ball.won) * 10) #scores are 40, 30, 20, 10 in that order
+							Ball.won.append(self.ID) #New ball has won
+							balls[self.ID] = None #No other way in python to delete an instance
+							if len(Ball.won) == 4:
+								update_level()
+						else:
+							Ball.scores[self.ID]  = max(0, Ball.scores[self.ID] - 5) #prevents negative scores
 							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
 
 
@@ -249,33 +217,42 @@ def hex_to_dec (hex):
 		return d - 4294967296 #hFFFFFFFF+1
 
 def update_level(choice=None): #Done once to determine that level is changing and to which level
-	global t, level_changing, new_level
+	global t, new_level
 	if choice == None:
-		if active_level == level1:
+		if Level.active_level == level1:
 			new_level = level2
-		elif active_level == level2:
+		elif Level.active_level == level2:
 			new_level = level3
-		elif active_level == level3:
+		elif Level.active_level == level3:
 			new_level = level4
-		elif active_level == level4:
+		elif Level.active_level == level4:
 			new_level = level5 
-		elif active_level == level5:
+		elif Level.active_level == level5:
 			pass######################
 	else:
 		new_level = choice
 	t = 0
-	level_changing = True
+	Level.changing = True
 
 def level_change (): #Keeps happening until it sets the variable to false
-	global active_level, new_level
+	global new_level
 	if t < 0.5:
 		pass
 	elif t < 1:
-		active_particle_systems.append(ParticleSystem(particle_no=500, colour="transition", lifetime=1, distance=8000, coords=[-200, 360], type="stream", distr="unif", angle=0, width=500, size=30))
+		ParticleSystem.active_systems.append(ParticleSystem(particle_no=500, colour="transition", lifetime=1, distance=8000, coords=[-200, 360], type="stream", distr="unif", angle=0, width=500, size=30))
 	elif t < 2:
-		active_level = new_level
+		Level.active_level = new_level
+		Ball.won = []
+	elif t < 2.2:
+		if balls[0] == None: balls[0] = Ball(0) #gradually creates new balls again
+	elif t < 2.4:
+		if balls[1] == None: balls[1] = Ball(1)
+	elif t < 2.6:
+		if balls[2] == None: balls[2] = Ball(2)
+	elif t < 2.8:
+		if balls[3] == None: balls[3] = Ball(3)
 	else:
-		level_changing = False
+		Level.changing = False
 
 
 def which_level (level_in): #turns level name into number
@@ -291,6 +268,10 @@ def which_level (level_in): #turns level name into number
 		return 5
 
 class Level:
+
+	changing = False
+	active_level = None
+
 	def __init__ (self, block_coords, hole_coords, colour, bg_colour, edge_colour, goal_colour):
 		self.colour = colour
 		self.bg_colour = bg_colour
@@ -305,15 +286,15 @@ class Level:
 
 	def draw_frame (self):
 		#parallax
-		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(10, 0, 83, 720))
-		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(1190, 0, 80, 720))
-		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(0, 10, 1280, 74))
-		pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(0, 635, 1280, 80))
+		pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(10, 0, 83, 720))
+		pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(1190, 0, 80, 720))
+		pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(0, 10, 1280, 74))
+		pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(0, 635, 1280, 80))
 		#frame
-		pygame.draw.rect(screen, active_level.colour, pygame.Rect(0, 0, 83, 720))
-		pygame.draw.rect(screen, active_level.colour, pygame.Rect(1200, 0, 80, 720))
-		pygame.draw.rect(screen, active_level.colour, pygame.Rect(0, 0, 1280, 74))
-		pygame.draw.rect(screen, active_level.colour, pygame.Rect(0, 644, 1280, 80))
+		pygame.draw.rect(screen, Level.active_level.colour, pygame.Rect(0, 0, 83, 720))
+		pygame.draw.rect(screen, Level.active_level.colour, pygame.Rect(1200, 0, 80, 720))
+		pygame.draw.rect(screen, Level.active_level.colour, pygame.Rect(0, 0, 1280, 74))
+		pygame.draw.rect(screen, Level.active_level.colour, pygame.Rect(0, 644, 1280, 80))
 
 
 class Block:
@@ -336,6 +317,9 @@ class Goal (Hole):
 		self.pos = [coords[0], coords[1]]
 
 class ParticleSystem ():
+
+	active_systems = []
+
 	def __init__(self, particle_no, colour, lifetime, distance, coords, type="burst", distr="gauss", angle=None, size=5, width=60):
 		self.particles = []
 		for i in range(particle_no):
@@ -383,7 +367,7 @@ def draw_parallax (object):
 			  object.pos[1] + scale_factorY,
 			  object.rect.right - object.pos[0] + scale_factorX,
 			  object.rect.bottom - object.pos[1] + scale_factorY]
-	pygame.draw.rect(screen, active_level.edge_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
+	pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
 
 level1_blocks = [(300, 50, 60, 320),
 				(750, 300, 60, 380)]
@@ -465,11 +449,22 @@ level5_edge_colour = (13, 77, 181)
 level5_goal_colour = (200, 230, 255, 255) #RGBA
 level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, level5_edge_colour, level5_goal_colour)
 
-active_level = level1
+Level.active_level = level1
 
-level_changing = False
-
-active_particle_systems = []
+def manual_movement (ball_ID, key1, key2, key3, key4):
+	keys = pygame.key.get_pressed()
+	if keys[key1]:
+		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
+		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("CCCCCCCC") #Fake HEX movement of ball (if exists) for manual override
+	if keys[key2]:
+		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID)
+		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("33333333")
+	if keys[key3]:
+		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID)
+		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("33333333")
+	if keys[key4]:
+		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID)
+		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("CCCCCCCC")
 
 titlefont = pygame.font.SysFont('interextrabeta', 200)
 title = titlefont.render("Title", True, (255,255,255))
@@ -478,6 +473,9 @@ title_rect.center = (640, 360)
 levelfont = pygame.font.SysFont('interextrabeta', 50, italic=True)
 score_font = pygame.font.Font(None, 30)
 
+t = 0
+dt = 0.001
+clock = pygame.time.Clock()
 t0 = time.time()
 running = True
 
@@ -487,76 +485,81 @@ def GUI_loop ():
 	t += time.time() - t0	#keeps track of seconds elapsed since level start
 	t0 = time.time()
 
-	screen.fill(active_level.bg_colour)
+	screen.fill(Level.active_level.bg_colour)
 
 
-	for i, block in enumerate(active_level.blocks): #draws parallax
+	for i, block in enumerate(Level.active_level.blocks): #draws parallax
 		draw_parallax(block)
 
-	active_level.draw_frame()
+	Level.active_level.draw_frame()
 
-	for block in active_level.blocks: #draws blocks
-		pygame.draw.rect(screen, active_level.colour, block.rect)
+	for block in Level.active_level.blocks: #draws blocks
+		pygame.draw.rect(screen, Level.active_level.colour, block.rect)
 	
 	screen.blit(vignette, (0, 0))
 
-	for hole in active_level.holes: #draws holes
+	for hole in Level.active_level.holes: #draws holes
 		screen.blit(hole.image, (hole.pos[0], hole.pos[1]))
-	goal_centre = [active_level.holes[0].pos[0] + 60, active_level.holes[0].pos[1] + 60]
-	screen.blit(active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
+	goal_centre = [Level.active_level.holes[0].pos[0] + 60, Level.active_level.holes[0].pos[1] + 60]
+	screen.blit(Level.active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
 
 	keys = pygame.key.get_pressed()
-	if keys[pygame.K_w]:
-		if balls[0] == None: balls[0] = Ball(0) #Spawn ball if doesn't exist
-		balls[0].acc[1] = hex_to_dec("CCCCCCCC") #Fake HEX movement of ball for manual override
-	if keys[pygame.K_s]:
-		if balls[0] == None: balls[0] = Ball(0)
-		balls[0].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_d]:
-		if balls[0] == None: balls[0] = Ball(0)
-		balls[0].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_a]:
-		if balls[0] == None: balls[0] = Ball(0)
-		balls[0].acc[0] = hex_to_dec("CCCCCCCC")
+	manual_movement(0, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
+	manual_movement(1, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT)
+	manual_movement(2, pygame.K_i, pygame.K_k, pygame.K_l, pygame.K_j)
+	manual_movement(3, pygame.K_g, pygame.K_b, pygame.K_n, pygame.K_v)
 
-	if keys[pygame.K_UP]:
-		if balls[1] == None: balls[1] = Ball(1)
-		balls[1].acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_DOWN]:
-		if balls[1] == None: balls[1] = Ball(1)
-		balls[1].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_RIGHT]:
-		if balls[1] == None: balls[1] = Ball(1)
-		balls[1].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_LEFT]:
-		if balls[1] == None: balls[1] = Ball(1)
-		balls[1].acc[0] = hex_to_dec("CCCCCCCC")
+	# if keys[pygame.K_w]:
+	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0) #Spawn ball if doesn't exist
+	# 	if balls[0] != None: balls[0].acc[1] = hex_to_dec("CCCCCCCC") #Fake HEX movement of ball for manual override
+	# if keys[pygame.K_s]:
+	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0)
+	# 	balls[0].acc[1] = hex_to_dec("33333333")
+	# if keys[pygame.K_d]:
+	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0)
+	# 	balls[0].acc[0] = hex_to_dec("33333333")
+	# if keys[pygame.K_a]:
+	# 	if balls[0] == None and 0 not in Ball.won: balls[0] = Ball(0)
+	# 	balls[0].acc[0] = hex_to_dec("CCCCCCCC")
 
-	if keys[pygame.K_i]:
-		if balls[2] == None: balls[2] = Ball(2)
-		balls[2].acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_k]:
-		if balls[2] == None: balls[2] = Ball(2)
-		balls[2].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_l]:
-		if balls[2] == None: balls[2] = Ball(2)
-		balls[2].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_j]:
-		if balls[2] == None: balls[2] = Ball(2)
-		balls[2].acc[0] = hex_to_dec("CCCCCCCC")
+	# if keys[pygame.K_UP]:
+	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
+	# 	balls[1].acc[1] = hex_to_dec("CCCCCCCC")
+	# if keys[pygame.K_DOWN]:
+	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
+	# 	balls[1].acc[1] = hex_to_dec("33333333")
+	# if keys[pygame.K_RIGHT]:
+	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
+	# 	balls[1].acc[0] = hex_to_dec("33333333")
+	# if keys[pygame.K_LEFT]:
+	# 	if balls[1] == None and 1 not in Ball.won: balls[1] = Ball(1)
+	# 	balls[1].acc[0] = hex_to_dec("CCCCCCCC")
 
-	if keys[pygame.K_g]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[1] = hex_to_dec("CCCCCCCC")
-	if keys[pygame.K_b]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[1] = hex_to_dec("33333333")
-	if keys[pygame.K_n]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[0] = hex_to_dec("33333333")
-	if keys[pygame.K_v]:
-		if balls[3] == None: balls[3] = Ball(3)
-		balls[3].acc[0] = hex_to_dec("CCCCCCCC")
+	# if keys[pygame.K_i]:
+	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
+	# 	balls[2].acc[1] = hex_to_dec("CCCCCCCC")
+	# if keys[pygame.K_k]:
+	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
+	# 	balls[2].acc[1] = hex_to_dec("33333333")
+	# if keys[pygame.K_l]:
+	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
+	# 	balls[2].acc[0] = hex_to_dec("33333333")
+	# if keys[pygame.K_j]:
+	# 	if balls[2] == None and 2 not in Ball.won: balls[2] = Ball(2)
+	# 	balls[2].acc[0] = hex_to_dec("CCCCCCCC")
+
+	# if keys[pygame.K_g]:
+	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
+	# 	balls[3].acc[1] = hex_to_dec("CCCCCCCC")
+	# if keys[pygame.K_b]:
+	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
+	# 	balls[3].acc[1] = hex_to_dec("33333333")
+	# if keys[pygame.K_n]:
+	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
+	# 	balls[3].acc[0] = hex_to_dec("33333333")
+	# if keys[pygame.K_v]:
+	# 	if balls[3] == None and 3 not in Ball.won: balls[3] = Ball(3)
+	# 	balls[3].acc[0] = hex_to_dec("CCCCCCCC")
 
 	for ball in balls:
 		if ball != None:
@@ -574,37 +577,37 @@ def GUI_loop ():
 		if ball != None:
 			ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
 
-	if active_level == level1 and not level_changing:
+	if Level.active_level == level1 and not Level.changing:
 		if t > 0.5 and t < 2.5: #Title stream
 			y = random.randint(340, 380)+np.sin(15*t)*40
-			active_particle_systems.append(ParticleSystem(particle_no=200, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", distr="gauss", angle=0, size=20))
+			ParticleSystem.active_systems.append(ParticleSystem(particle_no=200, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", distr="gauss", angle=0, size=20))
 
-	for system in active_particle_systems: #Draws all particle systems
+	for system in ParticleSystem.active_systems: #Draws all particle systems
 		for particle in system.particles:
 			particle.motion(dt)
 			particle.lifetime(system.particles)
 			if len(system.particles) == 0:
-				active_particle_systems.remove(system) #delete system if empty
+				ParticleSystem.active_systems.remove(system) #delete system if empty
 			pygame.draw.rect(screen, particle.colour, (particle.pos[0], particle.pos[1], particle.size, particle.size)) #draw any particles
 
-	if active_level == level1 and not level_changing:
+	if Level.active_level == level1 and not Level.changing:
 		if t > 0.5 and t < 2.5: #Title
 			screen.blit(title, title_rect)
 
 	if t > 2.5:
-		what_level = which_level(active_level) #Displays "Level X"
+		what_level = which_level(Level.active_level) #Displays "Level X"
 		text1 = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
 		screen.blit(text1, (560,10))
-		ball1_text = score_font.render("Ball 1 : " + str(ball_scores[0]), True, (255, 0, 0))
+		ball1_text = score_font.render("Ball 1 : " + str(Ball.scores[0]), True, (255, 0, 0))
 		screen.blit(ball1_text, (100,10))
-		ball2_text = score_font.render("Ball 2 : " +str(ball_scores[1]), True, (255, 0, 0))
+		ball2_text = score_font.render("Ball 2 : " +str(Ball.scores[1]), True, (255, 0, 0))
 		screen.blit(ball2_text, (300,10))
-		ball3_text = score_font.render("Ball 3 : " + str(ball_scores[2]), True, (255, 0, 0))
+		ball3_text = score_font.render("Ball 3 : " + str(Ball.scores[2]), True, (255, 0, 0))
 		screen.blit(ball3_text, (700,10))
-		ball4_text = score_font.render("Ball 4 : " +str(ball_scores[3]), True, (255, 0, 0))
+		ball4_text = score_font.render("Ball 4 : " +str(Ball.scores[3]), True, (255, 0, 0))
 		screen.blit(ball4_text, (900,10))
 
-	if level_changing:
+	if Level.changing:
 		level_change() #keeps doing this until it sets the variable to false
 
 	pygame.display.update()
