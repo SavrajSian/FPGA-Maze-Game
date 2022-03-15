@@ -2,17 +2,17 @@ import subprocess
 import socket
 import time
 
-def send_on_jtag(msg):
-    #assert len(msg)>=1, "Please make the cmd a single character"
+output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+send_to_fpga = ""
 
-    output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+def uart():
+        output.stdin.write(bytearray(str(send_to_fpga + "\n"), 'utf-8'))                                  
+        output.stdin.flush()
 
-    #output.stdin.write(bytearray(str(cmd + "\n"), 'utf-8'))
-    #output.stdin.flush()
+        val = output.stdout.readline()
+        send_to_fpga = ""
 
-    vals = output.stdout.readlines() 
-
-    return vals[4]
+        return val
 
 server_name = 'localhost'
 server_port = 12000
@@ -21,19 +21,21 @@ client_socket.settimeout(0.01) #10ms timeout for receives, after which silent er
 connection = False
 send_msg = "0,33333333:33333333,\n"
 
-def network():
-    global recv_msg, send_msg, connection
-    if connection == False:
-            try:
-                    try: client_socket.connect((server_name, server_port))
-                    except: pass
-                    client_socket.send("I'm an FPGA".encode())
-                    print("Connected")
-                    connection = True
-            except:
-                    pass
-    else: #connected
-            try:
+def connect ():
+        global connection
+        try:
+                try: client_socket.connect((server_name, server_port))
+                except: pass
+                client_socket.send("I'm an FPGA".encode())
+                print("Connected")
+                connection = True
+                time.sleep(0.05)
+        except:
+                pass
+def recv_msg ():
+        global recv_msg
+        while True:
+                time.sleep(0.005)
                 recv_msg = client_socket.recv(1024).decode()
                 print(f"received {send_msg}")
                 sender = recv_msg.split(',')[0]
@@ -41,19 +43,28 @@ def network():
                         pass #server messages
                 else: #??? messages
                         try:
-                            pass    #???
+                                pass    #???
                         except:
                                 pass
-            except:
-                pass
-            try:
-                    client_socket.send(send_msg.encode())
-                    print(f"sent {send_msg}")
-            except:
-                    pass
-            send_msg_prev = send_msg
+def send_msg ():
+        global send_msg
+        while True:
+                time.sleep(0.05)
+                #send_msg = UART()
+                send_msg = "0,33333333:33333333, "
+                try:
+                        client_socket.send(send_msg.encode())
+                        print(f"sent {send_msg}")
+                except:
+                        pass
 
+connection = False
+server_name = 'localhost'
+server_port = 12000
 print(f"Attempting to connect to {server_name}...")
-while True:
-    network()
-
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+while connection == False:
+    time.sleep(0.005)
+    connect()
+threading.Thread(target=send_msg).start()
+threading.Thread(target=recv_msg).start()
