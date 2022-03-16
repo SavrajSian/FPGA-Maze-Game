@@ -1,4 +1,3 @@
-from asyncio import format_helpers
 import pygame, pygame.gfxdraw
 import math, time, random
 import numpy as np
@@ -20,6 +19,7 @@ ball_colours = [(230, 230, 230), (255, 255, 170), (170, 255, 170), (170, 220, 25
 ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
 
 balls = [None, None, None, None]
+connected_balls = [None, None, None, None]
 
 class Ball:
 
@@ -33,7 +33,7 @@ class Ball:
 		self.acc = [0, 0]
 		self.vel = [0, 0]
 		self.pos = ball_initial_pos[ID].copy()
-		self.damping = 1000
+		self.sensitivity = 5000
 		self.colour = ball_colours[ID]
 		self.image = ball_images[ID].copy()
 		self.rect = self.image.get_rect()
@@ -73,8 +73,8 @@ class Ball:
 		return [self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]] #centre on global coords
 
 	def motion_calc (self, dt):
-		self.vel[0] += self.acc[0]*dt/self.damping	#v = u + at
-		self.vel[1] += self.acc[1]*dt/self.damping
+		self.vel[0] += self.acc[0]*dt*self.sensitivity	#v = u + at
+		self.vel[1] += self.acc[1]*dt*self.sensitivity
 
 		self.vel[0] = self.vel[0]*Ball.friction
 		self.vel[1] = self.vel[1]*Ball.friction
@@ -172,7 +172,8 @@ class Ball:
 							Ball.scores[self.ID] += 40 - (len(Ball.won) * 10) #scores are 40, 30, 20, 10 in that order
 							Ball.won.append(self.ID) #New ball has won
 							balls[self.ID] = None #No other way in python to delete an instance
-							if len(Ball.won) == 4:
+							num_balls = [ball for ball in connected_balls if ball != None]
+							if len(Ball.won) == len(num_balls):
 								update_level()
 						else:
 							Ball.scores[self.ID]  = max(0, Ball.scores[self.ID] - 5) #prevents negative scores
@@ -205,22 +206,23 @@ def update_level(choice=None): #Done once to determine that level is changing an
 	Level.changing = True
 
 def level_change (): #Keeps happening until it sets the variable to false
-	global new_level
+	global new_level, balls
 	if t < 0.5:
 		pass
 	elif t < 1:
 		ParticleSystem.active_systems.append(ParticleSystem(particle_no=500, colour="transition", lifetime=1, distance=8000, coords=[-200, 360], type="stream", distr="unif", angle=0, width=500, size=30))
-	elif t < 2:
+	elif t < 1.5:
 		Level.active_level = new_level
 		Ball.won = []
+		balls = [None, None, None, None]
+	elif t < 2:
+		if balls[0] == None and connected_balls[0] != None: balls[0] = Ball(0) #gradually creates new balls again
 	elif t < 2.2:
-		if balls[0] == None: balls[0] = Ball(0) #gradually creates new balls again
+		if balls[1] == None and connected_balls[1] != None: balls[1] = Ball(1)
 	elif t < 2.4:
-		if balls[1] == None: balls[1] = Ball(1)
+		if balls[2] == None and connected_balls[2] != None: balls[2] = Ball(2)
 	elif t < 2.6:
-		if balls[2] == None: balls[2] = Ball(2)
-	elif t < 2.8:
-		if balls[3] == None: balls[3] = Ball(3)
+		if balls[3] == None and connected_balls[3] != None: balls[3] = Ball(3)
 	else:
 		Level.changing = False
 
@@ -424,17 +426,25 @@ Level.active_level = level1
 def manual_movement (ball_ID, key1, key2, key3, key4):
 	keys = pygame.key.get_pressed()
 	if keys[key1]:
-		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
-		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("CCCCCCCC") #Fake HEX movement of ball (if exists) for manual override
+		if balls[ball_ID] == None and ball_ID not in Ball.won:
+			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
+			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("FFFFFF5C") #Fake HEX movement of ball (if exists) for manual override
 	if keys[key2]:
-		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID)
-		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("33333333")
+		if balls[ball_ID] == None and ball_ID not in Ball.won:
+			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
+			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("A3")
 	if keys[key3]:
-		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID)
-		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("33333333")
+		if balls[ball_ID] == None and ball_ID not in Ball.won:
+			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
+			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("A3")
 	if keys[key4]:
-		if balls[ball_ID] == None and ball_ID not in Ball.won: balls[ball_ID] = Ball(ball_ID)
-		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("CCCCCCCC")
+		if balls[ball_ID] == None and ball_ID not in Ball.won:
+			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
+			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("FFFFFF5C")
 
 titlefont = pygame.font.SysFont('interextrabeta', 200)
 title = titlefont.render("Title", True, (255,255,255))
@@ -479,6 +489,18 @@ def GUI_loop ():
 	manual_movement(2, pygame.K_i, pygame.K_k, pygame.K_l, pygame.K_j)
 	manual_movement(3, pygame.K_g, pygame.K_b, pygame.K_n, pygame.K_v)
 
+	if keys[pygame.K_1]: #Manual level change
+		update_level(level1)
+	if keys[pygame.K_2]:
+		update_level(level2)
+	if keys[pygame.K_3]:
+		update_level(level3)
+	if keys[pygame.K_4]:
+		update_level(level4)
+	if keys[pygame.K_5]:
+		update_level(level5)
+	
+
 	for ball in balls:
 		if ball != None:
 			ball.frame_collision()
@@ -491,9 +513,10 @@ def GUI_loop ():
 			else:
 				ball.respawn_animation()
 
-	for ball in balls:
-		if ball != None:
-			ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
+	if infrequent % 5  == 4:
+		for ball in balls:
+			if ball != None:
+				ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
 
 	if Level.active_level == level1 and not Level.changing:
 		if t > 0.5 and t < 2.5: #Title stream
@@ -535,7 +558,7 @@ def GUI_loop ():
 			running = False
 
 
-server_name = '3.85.233.169'
+server_name = 'localhost'
 server_port = 12000
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
@@ -548,8 +571,7 @@ def network ():
 	if connection == False:
 		try:
 			try: server_socket.connect((server_name, server_port))
-			except Exception as e:
-				print(e)
+			except:
 				pass
 			server_socket.send("I'm the game".encode()) #Identifies which client is game
 			print("Connected")
@@ -560,7 +582,7 @@ def network ():
 		received = False
 		try:
 			recv_msg = server_socket.recv(1024).decode()
-			print(f"received {send_msg}")
+			print(f"received {recv_msg}")
 			received = True
 		except:
 			pass
@@ -571,7 +593,7 @@ def network ():
 			else: #FPGA messages
 				try:
 					acc0 = recv_msg.split(',')[1].split(":")[0]
-					balls[int(sender)].acc[0] = hex_to_dec(acc0)
+					balls[int(sender)].acc[0] = -hex_to_dec(acc0)
 					acc1 = recv_msg.split(',')[1].split(":")[1]
 					balls[int(sender)].acc[1] = hex_to_dec(acc1)
 					print(balls[int(sender)].acc)
@@ -580,16 +602,16 @@ def network ():
 		
 		if send_msg != send_msg_prev: #Check whether to send
 			try:
-				server_socket.send(send_msg.encode())
+				#server_socket.send(send_msg.encode()) ######################
 				print(f"sent {send_msg}")
 			except:
 				pass
 		send_msg_prev = send_msg
 
 if __name__ == "__main__":
-	i = 0
+	infrequent = 0
 	while running: #switches between game and networking
-		if i%5 == 0: #Make networking infrequent to reduce lag
+		if infrequent%5 == 0: #Make networking infrequent to reduce lag
 			network()
-		i += 1
+		infrequent += 1
 		GUI_loop()

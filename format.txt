@@ -14,7 +14,7 @@ OR
 slot1: [receiver]
 0 1 2 3 s 
 slot 2:
-LED= 7SEG= scores={}
+LED= 7SEG= scores={100:350:300:455}
 
 
 slot1,slot2,slot3,...

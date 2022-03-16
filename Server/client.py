@@ -3,13 +3,16 @@ import socket
 import time
 import threading
 
-#output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+for i in range(4):
+        val = output.stdout.readline().decode() #get rid of header from nios2-terminal
 send_to_fpga = ""
 
-def uart():
-        output.stdin.write(bytearray(str(send_to_fpga + "\n"), 'utf-8'))                                  
-        output.stdin.flush()
-        val = output.stdout.readline()
+def UART():
+        global send_to_fpga
+        #output.stdin.write(bytearray(str(send_to_fpga + "\n"), 'utf-8'))                                  
+        #output.stdin.flush()
+        val = output.stdout.readline().decode()
         send_to_fpga = ""
         return val
 
@@ -17,15 +20,17 @@ def connect ():
         global connection
         try:
                 client_socket.connect((server_name, server_port))
+                time.sleep(0.05)
+                connection = True
         except:
             pass
         try:
                 client_socket.send("I'm an FPGA".encode())
                 print("Connected")
-                connection = True
                 time.sleep(0.05)
-        except:
-            pass
+        except exception as e:
+                print(e)
+                pass
 
 def recv_msg ():
         global recv_msg
@@ -44,18 +49,21 @@ def recv_msg ():
 
 def send_msg ():
         global send_msg
+        i = 0
         while True:
-                time.sleep(0.05)
-                #send_msg = uart()
-                send_msg = "weoio"
-                try:
-                        client_socket.send(send_msg.encode())
-                        print(f"sent {send_msg}")
-                except:
-                        pass
+                i += 1
+                msg = UART()
+                send_msg = "0," + msg.split(" ")[0] + ":" + msg.split(" ")[1] + ","
+                if i % 100 == 0: #infrequent sends
+                        time.sleep(0.05)
+                        try:
+                                client_socket.send(send_msg.encode())
+                                print(f"sent {send_msg}")
+                        except:
+                                pass
 
 connection = False
-server_name = '3.85.233.169'
+server_name = 'localhost'
 server_port = 12000
 print(f"Attempting to connect to {server_name}...")
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
