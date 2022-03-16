@@ -28,10 +28,6 @@ dodgeball_initial_pos = [[100, 100], [1130, 100], [100, 570], [1130, 570]]
 
 balls = [None, None, None, None]
 
-starttimesp = 9999999999999999999999999
-starttimeinv = 9999999999999999999999999
-starttimefr = 9999999999999999999999999
-
 class Ball:
     friction = 0.95  # gradual slowing
     restitution = 0.6  # bounce
@@ -254,21 +250,18 @@ class Ball:
             if distance < 30:  # ball close to powerup
                 if powerup.type == 'speedup':
                     self.speedup = self.ID
-                    print(self.speedup)
                 elif powerup.type == 'freeze':
                     savefrID = self.ID
                     for ball in balls:
                         if ball != None:
                             if savefrID != ball.ID:
                                 ball.freeze = ball.ID
-                                print(self.freeze)
                 elif powerup.type == 'invert':
                     saveinvID = self.ID
                     for ball in balls:
                         if ball!= None:
                             if saveinvID != ball.ID:
                                 ball.invert = ball.ID
-                                print(ball.invert)
                 powerup.dead = 1
                 return str(powerup.type)
             else:
@@ -663,7 +656,7 @@ dodgeball_edge_colour = (13, 77, 181)
 dodgeball = Dodgeball(dodgeball_blocks, dodgeball_colour,
                       dodgeball_bg_colour, dodgeball_edge_colour)
 
-Level.active_level = dodgeball
+Level.active_level = level1
 Powerup.active_powerups = level1_powerup
 active_powerups = SpawnPowerup(random.choice(Powerup.active_powerups), random.choice(powerupchoices))
 
@@ -698,9 +691,7 @@ dt = 0.001
 clock = pygame.time.Clock()
 t0 = time.time()
 running = True
-starttimesp = 0
-starttimeinv = 0
-starttimefr = 0
+
 
 def GUI_loop():
     global running, t, t0
@@ -739,9 +730,7 @@ def GUI_loop():
     manual_movement(2, pygame.K_i, pygame.K_k, pygame.K_l, pygame.K_j)
     manual_movement(3, pygame.K_g, pygame.K_b, pygame.K_n, pygame.K_v)
 
-    starttimesp = 0
-    starttimeinv = 0
-    starttimefr = 0
+
 
     for ball in balls:
         if ball != None and Level.active_level != dodgeball:
@@ -751,17 +740,14 @@ def GUI_loop():
 
             if ball.powerup_collision() != 'NO':
                 if ball.powerup_collision() == 'speedup':
-                    starttimesp = time.time()
                     powerup.pos = [0, 0]
                     powerup.image = transparent
 
                 if ball.powerup_collision() == 'invert':
-                    starttimeinv = time.time()
                     powerup.pos = [0, 0]
                     powerup.image = transparent
 
                 if ball.powerup_collision() == 'freeze':
-                    starttimefr = time.time()
                     powerup.pos = [0, 0]
                     powerup.image = transparent
 
@@ -846,7 +832,7 @@ def network():
             try:
                 server_socket.connect((server_name, server_port))
             except Exception as e:
-                #print(e)
+                print(e)
                 pass
             server_socket.send("I'm the game".encode())  # Identifies which client is game
             print("Connected")
