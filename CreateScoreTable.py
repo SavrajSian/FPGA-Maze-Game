@@ -52,8 +52,4 @@ def put_movie(Username, Score, dynamodb=None):
 if __name__ == '__main__':
     score_table = create_score_table()
     print("Table status:", score_table.table_status)
-    ########## inserting now
-    while (True):
-        movie_resp = put_movie("FPGA 1", 40)
-    print("Put movie succeeded:")
-    pprint(movie_resp)
+    ########## inserting rows
