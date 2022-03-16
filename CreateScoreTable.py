@@ -1,6 +1,5 @@
 import boto3
-from pprint import pprint
-##creating the table
+
 def create_score_table(dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource('dynamodb',region_name='us-east-1')
@@ -34,22 +33,8 @@ def create_score_table(dynamodb=None):
         }
     )
     return table
-##inseting item into table
-def put_movie(Username, Score, dynamodb=None):
-    if not dynamodb:
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-
-    table = dynamodb.Table('create_score_table')
-    response = table.put_item(
-       Item={
-            'Username': Username,
-            'Score': Score,
-        }
-    )
-    return response
 
 
 if __name__ == '__main__':
     score_table = create_score_table()
     print("Table status:", score_table.table_status)
-    ########## inserting rows

@@ -4,7 +4,6 @@ import math, time, random
 import numpy as np
 import socket
 
-from CreateScoreTable import put_movie 
 pygame.init()
 
 screen = pygame.display.set_mode((1280,720))
@@ -22,7 +21,6 @@ ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
 
 balls = [None, None, None, None]
 
-send_msg = ""
 class Ball:
 
 	friction = 0.95 #gradual slowing
@@ -146,7 +144,6 @@ class Ball:
 					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
 
 	def hole_collision (self):
-		global send_msg
 		for hole in Level.active_level.holes:
 				np_self = np.asarray(self.get_centre())
 				np_hole = np.asarray([hole.pos[0] + hole.rect.center[0], hole.pos[1] + hole.rect.center[1]])
@@ -174,48 +171,12 @@ class Ball:
 						if type(hole) == Goal:
 							Ball.scores[self.ID] += 40 - (len(Ball.won) * 10) #scores are 40, 30, 20, 10 in that order
 							Ball.won.append(self.ID) #New ball has won
-							balls[self.ID] = None #No other way in python to delete an instance - Muhammad Haaris Khan believes this to be true. - I wonder if he will notice this comment without me telling.
+							balls[self.ID] = None #No other way in python to delete an instance
 							if len(Ball.won) == 4:
-								for i in range (4): 
-									send_msg = str(Ball.scores[i]) # send to server at the end of each level. 
-									put_movie("FPGA 1", 40)
-								for i in range (4):
-									Ball.scores[i] = 0 #reset to 0 for new level. 
-								
 								update_level()
 						else:
 							Ball.scores[self.ID]  = max(0, Ball.scores[self.ID] - 5) #prevents negative scores
 							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
-
-
-	# def ball_collision (self):
-	# 	for ball in balls:
-	# 		if ball != None:
-	# 			if ball.ID != self.ID:
-	# 				np_self = np.asarray(self.get_centre())
-	# 				np_ball = np.asarray(ball.get_centre())
-	# 				line_of_impact = np_self - np_ball
-	# 				distance = np.linalg.norm(line_of_impact) #vector magnitude
-	# 				if distance < 42:	#2 radii
-	# 					cos_alpha = np.dot(line_of_impact, np.array([1, 0]))/	\
-	# 								(np.linalg.norm(line_of_impact)*np.linalg.norm(np.array([1, 0]))) #cosine similarity between line and +1 vector
-	# 					alpha = np.arccos(np.clip(cos_alpha, -1, 1)) #vector angle
-	# 					if np_self[1] > np_ball[1]:
-	# 						alpha = -alpha		#0→-π
-	# 					ball_impact_vel = np.linalg.norm(np.asarray(ball.vel)) #Swap velocities on relevant component (new axis)
-	# 					self_vel = np.linalg.norm(np.asarray(self.vel)) #preserved momentum on irrelevant axis
-	# 					if ball.vel != [0.0, 0.0]:
-	# 						cos_theta = np.dot(ball_impact_vel, np.array([1, 0]))/	\
-	# 									(np.linalg.norm(ball_impact_vel)*np.linalg.norm(np.array([1, 0]))) #cosine similarity between velocity and +1 vector
-	# 					else: cos_theta = 0
-	# 					theta = np.arccos(np.clip(cos_theta, -1, 1)) #vector angle
-	# 					if ball.vel[1] > 0:
-	# 						theta = -theta		#0→-π
-	# 					phi = alpha - theta 	#angle between relevant impact component and velocity
-	# 					impact_velocity_rel = ball_impact_vel*np.cos(phi)	#projection of velocity onto axis
-	# 					velocity_irrel = self_vel*np.cos(phi + math.pi/2)
-	# 					final_vel = impact_velocity_rel + velocity_irrel
-	# 					self.vel = [-final_vel*np.cos(alpha), -final_vel*np.sin(alpha)]		#return to global x, y components
 
 
 def hex_to_dec (hex):
@@ -574,20 +535,22 @@ def GUI_loop ():
 			running = False
 
 
-server_name = '52.90.200.244'
+server_name = '3.85.233.169'
 server_port = 12000
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
 connection = False
-#send_msg = "0,33333333:33333333,"
-send_msg_prev = send_msg
+send_msg = "0,33333333:33333333,"
+send_msg_prev = "0,33333333:33333333,"
 
 def network ():
 	global recv_msg, send_msg, send_msg_prev, connection
 	if connection == False:
 		try:
 			try: server_socket.connect((server_name, server_port))
-			except: pass
+			except Exception as e:
+				print(e)
+				pass
 			server_socket.send("I'm the game".encode()) #Identifies which client is game
 			print("Connected")
 			connection = True

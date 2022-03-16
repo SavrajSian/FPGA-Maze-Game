@@ -5,7 +5,7 @@ import socket
 output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 
 
-def uart(cmd):
+def send_on_jtag(cmd):
     output.stdin.write(bytearray(str(cmd + "\n"), 'utf-8'))                                  
     output.stdin.flush()
 
@@ -13,9 +13,20 @@ def uart(cmd):
 
     return val
 
+
 def perform_computation():
-    res = uart("W")
+    ##cmd = input("Enter any value: ")
+    ##while (1):
+    res = send_on_jtag("W")
+        ##print(res[4])
+        ##print("\n")
+
     return res
+    
+    ##output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE)
+    ##while(1):
+    ##    vals = output.stdout.readlines()
+    ##    print(vals)
 
 def main():
     print("We're in tcp client..."); 

@@ -3,11 +3,11 @@ import time
 
 def parse (msg, socket):
     global game
-    if msg == "I'm the game": #initialisation
+    if msg == "I'm the game":
         game = socket #Identify which socket is the game
         print(f"{caddr[sockets.index(game)]} is the game")
         return None, None
-    elif socket == game: #from-game format ######################
+    elif socket != game: #from-game format ######################
         recipient = msg.split(',')[0]
         if recipient == "s":
             #TODO: game wants to talk to server only
