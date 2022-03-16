@@ -575,7 +575,7 @@ level2_holes = [(1020, 450),  # first hole is always the goal
                 (800, 300),
                 (1000, 400),
                 (1100, 350)]
-level2_powerup = [(100, 500), (1000, 700)]
+level2_powerup = [(300, 550), (1000, 300), (1100, 120)]
 level2_colour = (129, 77, 189)  # Light Purple
 level2_bg_colour = (81, 8, 163)  # Dark purple
 level2_edge_colour = (60, 2, 127)
