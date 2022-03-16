@@ -40,65 +40,20 @@ char enteredText[CHARLIM]; //The text that the user enters
 char text[2*CHARLIM];//The text that has been adjusted for the allowed letters
 int pause, reverse, toggle, speedup_toggle, slowdown_toggle, dance_state, dancing, dance_dir, upsideDown, length, re_enter, disp_off, flag;
 int timer = CLOCKINIT;  //Standard speed for movement
-/*
-int main(){
-  int button_datain, lights;  //Values for the pushbuttons, LEDs, and switches, respectively
-  int switch_datain = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);	//Read the data from the switches
-  int location = 0; //Keeps track of where we are in the display, used for scrolling the text
+int life = 1023;
 
-  initializeDisplay();
 
-  // Event loop never exits.
-  while (1){
-
-	  //Update the display; delay so the letters stay on the screen (hence the loop)
-	  for(int i = 0; i< timer; i++){
-		  button_datain = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE); // Read the PB
-		  //switch_datain = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);  //Read in the switch values
-		  //The rightmost lights reflect the pushbuttons and whether pause, reverse, or dancing have been toggled
-		 // lights = (~button_datain & 0b000001111) | ((dancing & 0b000000001) << 2) | ((reverse & 0b0000000001) << 2);
-		 // lights = ((lights & 0b0000001111) | (switch_datain &  0b1111110000));
-		 // IOWR_ALTERA_AVALON_PIO_DATA(LED_BASE, lights);	//Update the LEDs with the values from the pushbuttons and the switches
-		  updatePBState(button_datain);	//Apply the user's button input to change the logic of the display
-
-	  }
-
-//	  pause = (switch_datain & 0b1000000000) >> 9;	//Chooses whether or not we are paused
-//	  dance_dir = (switch_datain & 0b0100000000) >> 8;	//Chooses direction of the dancing
-//	  upsideDown = (switch_datain & 0b0010000000) >> 7;	//Chooses direction of the letters
-//	  disp_off = (switch_datain & 0b0001000000) >> 6;	//Chooses direction of the letters
-
-	  updateText();		//Decides whether the user has put in a request to update the text on the display, and handle accordingly
-
-	  timer = updateTimer(timer, speedup_toggle, slowdown_toggle);	//Deal with speeding up or slowing down the display
-
-	  location = updateLocation(location, length);  //The amount we should shift each letter by based on the user input
-
-   //Print the characters out to the screen in the correct order, shifted by the amount.  We modulo with the length of the text so the display keeps wrapping around
-   print_letters(text[(location % length)], text[(location + 1) % length], text[(location + 2) % length], text[(location + 3) % length], text[(location + 4) % length], text[(location + 5) % length], dance_state);
-  }
-  return 0;
-}*/
+void print_data(char *accel_x, char *accel_y, char *switchdata, char *buttondata){
+	char *printMsg;
+	asprintf(&printMsg, "<--> %s %s <--> %s <--> %s <--> \n", accel_x, accel_y, switchdata, buttondata); 	// Print out the strings
+	alt_putstr(printMsg);
+	free(printMsg);
+	memset(text, 0, 2*CHARLIM);
+}
 
 void send_text(char *text) {
 	char *printMsg;
-	asprintf(&printMsg, "<--> %s <--> \n %c", text, 0x4); 	// Print out the strings
-	alt_putstr(printMsg);
-	free(printMsg);
-	memset(text, 0, 2*CHARLIM);								// Empty the text buffer for next input
-}
-
-void print_text(char *text, const int length) {
-	char *printMsg;
-	asprintf(&printMsg, "<--> Detected %d characters: %s <--> \n %c", length, text, 0x4); 	// Print out the strings
-	alt_putstr(printMsg);
-	free(printMsg);
-	memset(text, 0, 2*CHARLIM);								// Empty the text buffer for next input
-}
-
-void print_accel(char *text) {
-	char *printMsg;
-	asprintf(&printMsg, "<--> Accelerometer data: %s <--> \n %c", text, 0x4); 	// Print out the strings
+	asprintf(&printMsg, "<--> %s <--> \n", text); 	// Print out the strings
 	alt_putstr(printMsg);
 	free(printMsg);
 	memset(text, 0, 2*CHARLIM);								// Empty the text buffer for next input
@@ -120,30 +75,36 @@ char generate_text(char curr, int *length, char *text, int *running) {
 	return newCurr;
 }
 
-char* read_chars() {
+void interpret_command(char* command)
+{
+	if ( strcmp(command, "W") == 0 )			{ ; }
+	else if ( strcmp(command, "L") == 0 )		{ ; }
+	else if ( strcmp(command, "LIFE+") == 0 )	{
+		if (life != 1023){
+			life = ((life + 1) * 2) - 1;
+		}
+	}
+	else if ( strcmp(command, "LIFE-") == 0 )	{
+		if (life != 1){
+			life = ((life + 1) / 2) - 1;
+		}
+	}
+	else if ( strcmp(command, "p") == 0 )		{ ; }
+	else if ( strcmp(command, "r") == 0 )		{ life = 1023; }
+	else										{ ; }
+}
+
+void read_chars() {
 	char text[2*CHARLIM];									// The buffer for the printing text
 	char prevLetter = '!';
 	int length = 0;
 	int running = 1;
 
-	while (running) {									// Keep running until QUITLETTER is encountered
-		prevLetter = alt_getchar();							// Extract the first character (and create a hold until one arrives)
-		prevLetter = generate_text(prevLetter, &length, text, &running);		// Process input text
-		//print_text(text, length);							// Print input text
-	}
+	prevLetter = alt_getchar();							// Extract the first character (and create a hold until one arrives)
+	prevLetter = generate_text(prevLetter, &length, text, &running);		// Process input text
+	//print_text(text, length);							// Print input text
 
-	return text;
-}
-
-int updateSens(int button, int updated)
-{
-	if ((updated == 0) && (button == 0b10)) { send_text("B1"); return 1; }
-	return 0;
-}
-int updateB2(int button, int updated)
-{
-	if ((updated == 0) && (button == 0b01)) { send_text("B2"); return 1; }
-	return 0;
+	if (strcmp(text, "") !=0 )	{ interpret_command(text); }
 }
 
 void output_switch( int new, int old )
@@ -182,22 +143,8 @@ void output_button ( int new, int old)
 			else if (old ==2 ) 	{ sprintf(text, "B2 pressed\n"); send_text(text); }
 		}
 	}
-
 }
 
-void interpret_command(char * command)
-{
-	char text[2*CHARLIM];
-
-	sprintf(text, "IN HERE\n");
-	send_text(text);
-
-	if ( strcmp(command, "W") == 0 )			{ sprintf(text, "IN HERE\n"); send_text(text); }
-	else if ( strcmp(command, "W") == 0 )		{ sprintf(text, "IN HERE2\n"); send_text(text); }
-	else if ( strcmp(command, "LIFE+") == 0 )	{ sprintf(text, "IN HERE3\n"); send_text(text); }
-	else if ( strcmp(command, "LIFE-") == 0 )	{ sprintf(text, "IN HERE4\n"); send_text(text); }
-	else if ( strcmp(command, "p") == 0 )		{ sprintf(text, "IN HERE5\n"); send_text(text); }
-}
 
 #define OFFSET -32
 #define PWM_PERIOD 16
@@ -250,49 +197,68 @@ void timer_init(void * isr) {
 
 int main(){
 
-	// ACCELEROMTER
+	// ACCELEROMTER INITIALISE
 	alt_32 x_read;
+	alt_32 y_read;
+	alt_32 z_read;
 	alt_up_accelerometer_spi_dev * acc_dev;
 	acc_dev = alt_up_accelerometer_spi_open_dev("/dev/accelerometer_spi");
 	if (acc_dev == NULL) { // if return 1, check if the spi ip name is "accelerometer_spi"
 		return 1;
 	}
-
 	timer_init(sys_timer_isr);
 
-	char to_text[2*CHARLIM];
-	char input_command[2*CHARLIM];
+	// ACCELEROMTER DATA
+	char accel_data_x[4*CHARLIM];
+	char accel_data_y[4*CHARLIM];
+	char accel_data_z[4*CHARLIM];
+	char switch_data[4*CHARLIM];
+	char button_data[4*CHARLIM];
 
 	// SWITCH
 	int switch_datain, switch_data_old = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
 	// BUTTON
 	int button_datain, button_data_old = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
 
+	alt_32 LED_data;
+
+	// HEX DISPLAYS
+
 	while (1) {
+		IOWR_ALTERA_AVALON_PIO_DATA(LED_BASE, life);
 
 		/* <--> SENDING DATA <--> */
-
 		alt_up_accelerometer_spi_read_x_axis(acc_dev, & x_read);
-		sprintf(to_text, "%x", x_read);
-		//print_accel(to_text);
+		sprintf(accel_data_x, "%x", x_read);
+		alt_up_accelerometer_spi_read_y_axis(acc_dev, & y_read);
+		sprintf(accel_data_y, "%x", y_read);
+		//alt_up_accelerometer_spi_read_z_axis(acc_dev, & z_read);
+		//sprintf(accel_data_z, "%x", z_read);
 
 		//SWITCH
+		//switch_datain = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
+		//output_switch( switch_datain, switch_data_old );
+		//switch_data_old = switch_datain;
 		switch_datain = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
-		output_switch( switch_datain, switch_data_old );
-		switch_data_old = switch_datain;
+		sprintf(switch_data, "%x", switch_datain);
 
 		// BUTTON
+		//button_datain = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
+		//output_button( button_datain, button_data_old );
+		//button_data_old = button_datain;
 		button_datain = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
-		output_button( button_datain, button_data_old );
-		button_data_old = button_datain;
+		sprintf(button_data, "%x", button_datain);
+
+		print_data(accel_data_x, accel_data_y, switch_data, button_data);
 
 		/* <--> RECIEVING DATA <--> */
+		//read_chars();
+
 		//sprintf(input_command, "%s", read_chars());
-		//send_text("HERE2");
-		//interpret_command( "W" );
+		//interpret_command(input_command);
 
 		//sprintf(to_text, "Got read thing: %s\n", read_chars());
-		//send_text(to_text);
+		//send_text(to_text);*/
 
 	}
 
