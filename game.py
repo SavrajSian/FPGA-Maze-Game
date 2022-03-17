@@ -428,22 +428,22 @@ def manual_movement (ball_ID, key1, key2, key3, key4):
 	if keys[key1]:
 		if balls[ball_ID] == None and ball_ID not in Ball.won:
 			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
-			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+			connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball if doesn't exist
 		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("FFFFFF5C") #Fake HEX movement of ball (if exists) for manual override
 	if keys[key2]:
 		if balls[ball_ID] == None and ball_ID not in Ball.won:
 			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
-			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+			connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball if doesn't exist
 		if balls[ball_ID] != None: balls[ball_ID].acc[1] = hex_to_dec("A3")
 	if keys[key3]:
 		if balls[ball_ID] == None and ball_ID not in Ball.won:
 			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
-			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+			connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball if doesn't exist
 		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("A3")
 	if keys[key4]:
 		if balls[ball_ID] == None and ball_ID not in Ball.won:
 			balls[ball_ID] = Ball(ball_ID) #Spawn ball if doesn't exist
-			connected_balls[ball_ID] = Ball(ball_ID) #Connect ball if doesn't exist
+			connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball if doesn't exist
 		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("FFFFFF5C")
 
 titlefont = pygame.font.SysFont('interextrabeta', 200)
@@ -545,7 +545,7 @@ def GUI_loop ():
 		screen.blit(ball1_text, (520,650))
 		ball2_text = score_font.render(str(Ball.scores[2]), True, (120, 240, 120))
 		screen.blit(ball2_text, (720,650))
-		ball3_text = score_font.render(str(Ball.scores[3]), True, (120, 120, 240))
+		ball3_text = score_font.render(str(Ball.scores[3]), True, (90, 90, 240))
 		screen.blit(ball3_text, (920,650))
 
 	if Level.changing:
@@ -558,13 +558,13 @@ def GUI_loop ():
 			running = False
 
 
-server_name = 'localhost'
+server_name = "172.25.208.1"
 server_port = 12000
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
 connection = False
-send_msg = "0,33333333:33333333,"
-send_msg_prev = "0,33333333:33333333,"
+send_msg = "None"
+send_msg_prev = "None"
 
 def network ():
 	global recv_msg, send_msg, send_msg_prev, connection
@@ -587,18 +587,26 @@ def network ():
 		except:
 			pass
 		if received:
-			sender = recv_msg.split(',')[0]
-			if sender == "s":
-				pass #server messages
-			else: #FPGA messages
-				try:
-					acc0 = recv_msg.split(',')[1].split(":")[0]
-					balls[int(sender)].acc[0] = -hex_to_dec(acc0)
-					acc1 = recv_msg.split(',')[1].split(":")[1]
-					balls[int(sender)].acc[1] = hex_to_dec(acc1)
-					print(balls[int(sender)].acc)
-				except:
-					pass
+			if recv_msg[-10:] == " connected": #New FPGA connected
+				ball_ID = int(recv_msg[4])
+				balls[ball_ID] = Ball(ball_ID) #Spawn ball
+				connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball
+			elif recv_msg[-12:] == "disconnected":
+				ball_ID = int(recv_msg[4])
+				connected_balls[ball_ID] = None
+				balls[ball_ID] = None
+			else:
+				sender = recv_msg.split(',')[0]
+				if sender == "s":
+					pass #server messages
+				else: #FPGA messages
+					try:
+						acc0 = recv_msg.split(',')[1].split(":")[0]
+						balls[int(sender)].acc[0] = -hex_to_dec(acc0)
+						acc1 = recv_msg.split(',')[1].split(":")[1]
+						balls[int(sender)].acc[1] = hex_to_dec(acc1)
+					except:
+						pass
 		
 		if send_msg != send_msg_prev: #Check whether to send
 			try:

@@ -7,6 +7,7 @@ output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, 
 for i in range(4):
         val = output.stdout.readline().decode() #get rid of header from nios2-terminal
 send_to_fpga = ""
+ID = None
 
 def UART():
         global send_to_fpga
@@ -28,24 +29,28 @@ def connect ():
                 client_socket.send("I'm an FPGA".encode())
                 print("Connected")
                 time.sleep(0.05)
-        except exception as e:
+        except Exception as e:
                 print(e)
                 pass
 
 def recv_msg ():
-        global recv_msg
+        global recv_msg, ID
         while True:
                 time.sleep(0.005)
                 recv_msg = client_socket.recv(1024).decode()
-                print(f"received {send_msg}")
-                sender = recv_msg.split(',')[0]
-                if sender == "s":
-                        pass #server messages
-                else: #??? messages
-                        try:
-                                pass    #???
-                        except:
-                                pass
+                print(f"received {recv_msg}")
+                if recv_msg[0:12] == "You are FPGA": #assignment
+                        ID = int(recv_msg[-1])
+                        print(f"I am FPGA{ID}")
+                else:   
+                        sender = recv_msg.split(',')[0]
+                        if sender == "s":
+                                pass #server messages
+                        else: #??? messages
+                                try:
+                                        pass    #???
+                                except:
+                                        pass
 
 def send_msg ():
         global send_msg
@@ -63,7 +68,7 @@ def send_msg ():
                                 pass
 
 connection = False
-server_name = 'localhost'
+server_name = "172.25.208.1"
 server_port = 12000
 print(f"Attempting to connect to {server_name}...")
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
