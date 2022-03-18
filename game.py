@@ -6,12 +6,16 @@ import socket
 pygame.init()
 
 screen = pygame.display.set_mode((1280,720))
-pygame.display.set_caption(" ")#################
+pygame.display.set_caption("The Maze Game")
 
 vignette = pygame.image.load("assets/vignette.png")
 hole_image = pygame.image.load("assets/hole.png")
 goal_glow_image = pygame.image.load("assets/goal_glow.png").convert_alpha()
 goal_white_image = pygame.image.load("assets/goal_white.png").convert_alpha()
+speedup_image = pygame.image.load("assets/boost_powerup.png")
+invert_image = pygame.image.load("assets/invert_powerup.png")
+freeze_image = pygame.image.load("assets/freeze_powerup.png")
+transparent = pygame.image.load(("assets/transparent.png"))
 ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.image.load("assets/ball_y.png").convert_alpha(),
 				pygame.image.load("assets/ball_g.png").convert_alpha(), pygame.image.load("assets/ball_b.png").convert_alpha()]
 ball_colours = [(230, 230, 230), (255, 255, 170), (170, 255, 170), (170, 220, 255)]
@@ -32,7 +36,7 @@ class Ball:
 		self.ID = ID
 		self.acc = [0, 0]
 		self.vel = [0, 0]
-		self.pos = ball_initial_pos[ID].copy()
+		self.pos = ball_initial_pos[ID].copy() if Level.active_level != dodgeball else [random.randint(100, 1150), random.randint(100, 570)]
 		self.sensitivity = 5000
 		self.colour = ball_colours[ID]
 		self.image = ball_images[ID].copy()
@@ -42,6 +46,13 @@ class Ball:
 		self.scaler = 1.0
 		self.brightness = 255
 		self.respawn_timer = 20 #ms
+		self.kills = 0
+		self.deaths = 0
+		self.lives = 10
+		self.speedup = 'False'
+		self.invert = 'False'
+		self.freeze = 'False'
+		self.poweruptimer = 200
 
 	def respawn_animation (self):
 		if self.respawn_timer == 20:
@@ -73,14 +84,26 @@ class Ball:
 		return [self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]] #centre on global coords
 
 	def motion_calc (self, dt):
-		self.vel[0] += self.acc[0]*dt*self.sensitivity	#v = u + at
-		self.vel[1] += self.acc[1]*dt*self.sensitivity
+		if self.speedup != "False":
+			self.vel[0] += 2*self.acc[0]*dt*self.sensitivity  # v = u + at
+			self.vel[1] += 2*self.acc[1]*dt*self.sensitivity
+
+		elif self.freeze != "False" and self.ID == self.freeze:
+			self.vel[0] = 0
+			self.vel[1] = 0
+		else:
+			self.vel[0] += self.acc[0]*dt*self.sensitivity	#v = u + at
+			self.vel[1] += self.acc[1]*dt*self.sensitivity
 
 		self.vel[0] = self.vel[0]*Ball.friction
 		self.vel[1] = self.vel[1]*Ball.friction
 
-		self.pos[0] += self.vel[0]*dt
-		self.pos[1] += self.vel[1]*dt
+		if self.invert != "False":
+			self.pos[0] -= self.vel[0] * dt
+			self.pos[1] -= self.vel[1] * dt
+		else:
+			self.pos[0] += self.vel[0] * dt
+			self.pos[1] += self.vel[1] * dt
 
 	def frame_collision (self):
 		if self.get_centre()[0] - self.rect.center[0] < 82:		#left hitbox
@@ -129,7 +152,7 @@ class Ball:
 			   (self.get_centre()[0] - self.halfsize < block.rect.right - 5) and\
 			   (self.get_centre()[1] + self.halfsize > block.rect.top) and\
 			   (self.get_centre()[1] - self.halfsize < block.rect.top + 20):
-				self.pos[1] = block.rect.top - self.size + 2
+				self.pos[1] = block.rect.top - self.size + 3
 				self.vel[1] = -self.vel[1]*Ball.restitution
 				if abs(self.vel[1]) > 1000:
 					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
@@ -177,7 +200,78 @@ class Ball:
 								update_level()
 						else:
 							Ball.scores[self.ID]  = max(0, Ball.scores[self.ID] - 5) #prevents negative scores
-							self.__init__(self.ID) #respawn ball if fallen into the other holes. 
+							self.__init__(self.ID) #respawn ball if fallen into the other holes.
+
+	def powerup_collision(self):
+		np_selfpow = np.asarray(self.get_centre())
+		np_pow = np.asarray([active_powerup.pos[0] + active_powerup.rect.center[0], active_powerup.pos[1] + active_powerup.rect.center[1]])
+		powline = np_selfpow - np_pow
+		distance = np.linalg.norm(powline)
+		if distance < 60:  # ball close to powerup
+			ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(255,220,255), lifetime=0.2, distance=200, size=5, coords=[active_powerup.pos[0] + active_powerup.rect.center[0], active_powerup.pos[1] + active_powerup.rect.center[1]]))
+			if active_powerup.type == 'speedup':
+				self.speedup = self.ID
+				self.image.fill((55, 55, 55), None, pygame.BLEND_RGB_ADD)
+			elif active_powerup.type == 'freeze':
+				savefrID = self.ID
+				for ball in balls:
+					if ball != None:
+						if savefrID != ball.ID:
+							ball.freeze = ball.ID
+							ball.image.fill((0, 40, 55), None, pygame.BLEND_RGB_ADD)
+							ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(200,240,255), lifetime=2, distance=10, size=5, coords=[ball.pos[0] + ball.rect.center[0], ball.pos[1] + ball.rect.center[1]]))
+			elif active_powerup.type == 'invert':
+				saveinvID = self.ID
+				for ball in balls:
+					if ball!= None:
+						if saveinvID != ball.ID:
+							ball.invert = ball.ID
+							ball.image.fill((200, 200, 200, 255), None, pygame.BLEND_RGBA_MULT)
+							ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(50,0,50), lifetime=1, distance=50, size=5, coords=[ball.pos[0] + ball.rect.center[0], ball.pos[1] + ball.rect.center[1]]))
+			active_powerup.dead = 1
+			return str(active_powerup.type)
+		else:
+			return 'NO'
+
+
+	def poweruptimeout(self):
+		for ball in balls:
+			if ball != None:
+
+				if self.poweruptimer == 0:
+					self.speedup = 'False'
+					self.freeze = 'False'
+					self.invert = 'False'
+					self.image = ball_images[self.ID].copy()
+				elif self.poweruptimer > 0:
+					self.poweruptimer = max(0, self.poweruptimer - 1)
+
+	def ball_kill(self):
+		for ball in balls:
+			if ball != None:
+				if ball.ID != self.ID:
+					np_self = np.asarray(self.get_centre())
+					np_ball = np.asarray(ball.get_centre())
+					line_of_impact = np_self - np_ball
+					distance = np.linalg.norm(line_of_impact)
+					if distance < 50:
+						if np.linalg.norm(ball.vel) > np.linalg.norm(self.vel):
+							self.__init__(self.ID)
+							self.vel = [0, 0]
+							self.acc = [0, 0]
+							ball.kills += 1
+							self.deaths += 1
+							if self.lives > 0:
+								self.lives -= 1
+
+						elif np.linalg.norm(self.vel) > np.linalg.norm(ball.vel):
+							ball.__init__(ball.ID)
+							ball.vel = [0, 0]
+							ball.acc = [0, 0]
+							self.kills += 1
+							ball.deaths += 1
+							if ball.lives > 0:
+								ball.lives -= 1
 
 
 def hex_to_dec (hex):
@@ -188,33 +282,45 @@ def hex_to_dec (hex):
 		return d - 4294967296 #hFFFFFFFF+1
 
 def update_level(choice=None): #Done once to determine that level is changing and to which level
-	global t, new_level
+	global t, new_level, new_powerupplacements
 	if choice == None:
 		if Level.active_level == level1:
 			new_level = level2
+			new_powerupplacements = level2_powerup
 		elif Level.active_level == level2:
 			new_level = level3
+			new_powerupplacements = level3_powerup
 		elif Level.active_level == level3:
 			new_level = level4
+			new_powerupplacements = level4_powerup
 		elif Level.active_level == level4:
-			new_level = level5 
+			new_level = level5
+			new_powerupplacements = level5_powerup
 		elif Level.active_level == level5:
 			pass######################
 	else:
 		new_level = choice
+		if choice == level1: new_powerupplacements = level1_powerup
+		elif choice == level2: new_powerupplacements = level2_powerup
+		elif choice == level3: new_powerupplacements = level3_powerup
+		elif choice == level4: new_powerupplacements = level4_powerup
+		elif choice == level5: new_powerupplacements = level5_powerup
 	t = 0
 	Level.changing = True
 
 def level_change (): #Keeps happening until it sets the variable to false
-	global new_level, balls
+	global new_level, balls, new_powerupplacements
 	if t < 0.5:
 		pass
 	elif t < 1:
 		ParticleSystem.active_systems.append(ParticleSystem(particle_no=500, colour="transition", lifetime=1, distance=8000, coords=[-200, 360], type="stream", distr="unif", angle=0, width=500, size=30))
-	elif t < 1.5:
+	elif t < 1.4:
 		Level.active_level = new_level
 		Ball.won = []
 		balls = [None, None, None, None]
+		if new_level != dodgeball and Powerup.active_powerups != new_powerupplacements:
+			Powerup.active_powerups = new_powerupplacements
+			active_powerup.__init__(random.choice(Powerup.active_powerups), random.choice(Powerup.powerupchoices))
 	elif t < 2:
 		if balls[0] == None and connected_balls[0] != None: balls[0] = Ball(0) #gradually creates new balls again
 	elif t < 2.2:
@@ -238,6 +344,16 @@ def which_level (level_in): #turns level name into number
 		return 4
 	elif level_in == level5:
 		return 5
+
+def draw_parallax (object):
+	scale_factorX = (640 - object.rect.center[0]) / 100
+	scale_factorY = (360 - object.rect.center[1]) / 100
+	scaled = [object.pos[0] + scale_factorX,
+			  object.pos[1] + scale_factorY,
+			  object.rect.right - object.pos[0] + scale_factorX,
+			  object.rect.bottom - object.pos[1] + scale_factorY]
+	pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
+
 
 class Level:
 
@@ -288,6 +404,43 @@ class Goal (Hole):
 		self.rect = self.image.get_rect()
 		self.pos = [coords[0], coords[1]]
 
+class Dodgeball (Level):
+	def __init__(self, block_coords, hole_coords, colour, bg_colour, edge_colour):
+		self.colour = colour
+		self.bg_colour = bg_colour
+		self.edge_colour = edge_colour
+		self.blocks = []
+		self.holes = []
+		for i in range(len(block_coords)):
+			self.blocks.append(Block(block_coords[i]))
+
+class Powerup:
+	active_powerups = None
+	powerupchoices = ['speedup', 'freeze', 'invert']
+
+	def __init__(self, coords, name):
+		if name == 'freeze':
+			self.image = freeze_image
+		elif name == 'speedup':
+			self.image = speedup_image
+		elif name == 'invert':
+			self.image = invert_image
+
+		self.rect = self.image.get_rect()
+		self.pos = [coords[0], coords[1]]
+		self.brightness = 200
+		self.type = name
+		self.dead = 0
+		self.respawntime = random.randint(100, 400)
+
+	def respawn(self):
+		randomrespawntime = random.randint(100, 400)
+		if self.respawntime == 0 and self.dead == 1:
+			self.respawntime = randomrespawntime
+			self.__init__(random.choice(Powerup.active_powerups), random.choice(Powerup.powerupchoices))
+		elif self.respawntime > 0 and self.dead == 1:
+			self.respawntime = max(0, self.respawntime - 1)
+
 class ParticleSystem ():
 
 	active_systems = []
@@ -311,7 +464,7 @@ class Particle ():
 		else: 
 			self.pos = [coords[0], coords[1]]
 		if colour == "title":
-			self.colour = (255, max(0, 245-abs(360-self.pos[1])*0.8) , max(0, 190-abs(360-self.pos[1])*1.7)) #title gradient
+			self.colour = (255, max(0, 200-abs(360-self.pos[1])*0.6), max(0, 210-abs(360-self.pos[1])*1.7)) #title gradient
 		elif colour == "transition":
 			random_grey = random.randint(200, 255)
 			self.colour = (random_grey, random_grey, random_grey)
@@ -332,21 +485,17 @@ class Particle ():
 		if self.randomlifetime < 0:
 			particles.remove(self) #dead
 
-def draw_parallax (object):
-	scale_factorX = (640 - object.rect.center[0]) / 100
-	scale_factorY = (360 - object.rect.center[1]) / 100
-	scaled = [object.pos[0] + scale_factorX,
-			  object.pos[1] + scale_factorY,
-			  object.rect.right - object.pos[0] + scale_factorX,
-			  object.rect.bottom - object.pos[1] + scale_factorY]
-	pygame.draw.rect(screen, Level.active_level.edge_colour, pygame.Rect(scaled[0], scaled[1], scaled[2], scaled[3]))
 
 level1_blocks = [(300, 50, 60, 320),
 				(750, 300, 60, 380)]
 level1_holes = [(1020, 450), #first hole is always the goal
-				(500, 100),
-                (600, 500),
-                (1000, 200)]
+				(500, 150),
+				(400, 400),
+				(620, 520),
+				(1000, 350),
+				(980, 200)]
+level1_powerup = [(630, 300), (1080, 250), (350, 550)]
+level1powerups = [level1_powerup, random.choice(Powerup.powerupchoices)]
 level1_colour = (190,25,90) #Magenta
 level1_bg_colour = (120,15,70)
 level1_edge_colour = (100,10,60)
@@ -354,14 +503,16 @@ level1_goal_colour = (255, 110, 160, 255) #RGBA
 level1 = Level(level1_blocks, level1_holes, level1_colour, level1_bg_colour, level1_edge_colour, level1_goal_colour)
 
 level2_blocks = [(400, 50, 60, 300),
-				(600, 300, 60, 380),
-				(1100, 200, 300, 60)]
+				(700, 300, 60, 380),
+				(1000, 200, 300, 60)]
 level2_holes = [(1020, 450), #first hole is always the goal
-				(100, 250),
-                (200, 500),
-                (800, 300),
-                (1000, 400),
-                (1100, 350)]
+				(120, 300),
+				(200, 500),
+				(800, 300),
+				(1000, 400),
+				(1100, 350)]
+level2_powerup = [(500, 400), (1000, 300), (1100, 110)]
+level2powerups = [random.choice(level2_powerup), random.choice(Powerup.powerupchoices)]
 level2_colour = (129, 77, 189) #Light Purple
 level2_bg_colour = (81, 8, 163) #Dark purple
 level2_edge_colour = (60, 2, 127)
@@ -373,28 +524,32 @@ level3_blocks = [(300, 50, 60, 420),
 				(800, 50, 60, 320)]
 level3_holes = [(1020, 100), #first hole is always the goal
 				(120, 550),
-                (450, 450),
-                (650, 200),
-                (900, 100),
-                (1100, 450),
-                (450, 250)]
+				(450, 450),
+				(650, 200),
+				(900, 100),
+				(1100, 450),
+				(450, 250)]
+level3_powerup = [(700, 550), (1000, 520), (390, 110)]
+level3powerups = [level3_powerup, random.choice(Powerup.powerupchoices)]
 level3_colour = (41, 204, 73) #Light green
 level3_bg_colour = (44, 153, 66) #Dark green
 level3_edge_colour = (27, 112, 44)
 level3_goal_colour = (200, 255, 200, 255) #RGBA
 level3 = Level(level3_blocks, level3_holes, level3_colour, level3_bg_colour, level3_edge_colour, level3_goal_colour)
 
-level4_blocks = [(80, 580, 350, 80),
+level4_blocks = [(500, 350, 500, 60),
 				(300, 50, 60, 350),
-				(600, 220, 60, 480)]
-level4_holes = [(1020, 450), #first hole is always the goal
+				(600, 270, 60, 480)]
+level4_holes = [(650, 450), #first hole is always the goal
 				(250, 475),
-                (475, 500),
-                (700, 200),
-                (975, 200),
-                (1075, 200),
-                (1100, 400),
-                (950, 550)]
+				(475, 500),
+				(700, 200),
+				(975, 200),
+				(470, 160),
+				(1100, 400),
+				(950, 550)]
+level4_powerup = [(800, 120), (1080, 300), (350, 500)]
+level4powerups = [level4_powerup, random.choice(Powerup.powerupchoices)]
 level4_colour = (222, 139, 91) #Light orange
 level4_bg_colour = (191, 87, 27) #Dark orange
 level4_edge_colour = (172, 75, 19)
@@ -402,26 +557,40 @@ level4_goal_colour = (255, 230, 200, 255) #RGBA
 level4 = Level(level4_blocks, level4_holes, level4_colour, level4_bg_colour, level4_edge_colour, level4_goal_colour)
 
 level5_blocks = [(300, 50, 60, 120),
-		(200, 300, 60, 400),
-		(500, 50, 60, 320),
-                (500, 550, 60, 100),
-                (800, 550, 60, 100),
-                (900, 300, 340, 60)]
+				(200, 300, 60, 400),
+				(500, 50, 60, 320),
+				(500, 550, 60, 100),
+				(800, 300, 60, 500),
+				(1000, 300, 340, 60)]
 level5_holes = [(1020, 450), #first hole is always the goal
 				(400, 200),
-                (350, 350),
-                (450, 400),
-                (350, 550),
-                (650, 550),
-                (675, 150),
-                (975, 150)]
+				(350, 350),
+				(450, 400),
+				(350, 550),
+				(650, 550),
+				(675, 150),
+				(900, 400)]
+level5_powerup = [(600, 270), (1050, 160), (110, 500)]
+level5powerups = [level5_powerup, random.choice(Powerup.powerupchoices)]
 level5_colour = (89, 164, 222) #Light blue
 level5_bg_colour = (13, 110, 184 ) #Dark blue
 level5_edge_colour = (13, 77, 181)
 level5_goal_colour = (200, 230, 255, 255) #RGBA
 level5 = Level(level5_blocks, level5_holes, level5_colour, level5_bg_colour, level5_edge_colour, level5_goal_colour)
 
+dodgeball_blocks = [(250, 550, 50, 50), (1050, 400, 50, 50),
+					(725, 130, 50, 50), (650, 450, 55, 55), (400, 260, 40, 40)]
+dodgeball_holes = []
+dodgeball_colour = (190, 210, 230)
+dodgeball_bg_colour = (100, 100, 130)
+dodgeball_edge_colour = (140, 160, 200)
+dodgeball = Dodgeball(dodgeball_blocks, dodgeball_holes, dodgeball_colour,
+					  dodgeball_bg_colour, dodgeball_edge_colour)
+
 Level.active_level = level1
+
+Powerup.active_powerups = level1_powerup
+active_powerup = Powerup(random.choice(Powerup.active_powerups), random.choice(Powerup.powerupchoices))
 
 def manual_movement (ball_ID, key1, key2, key3, key4):
 	keys = pygame.key.get_pressed()
@@ -446,11 +615,11 @@ def manual_movement (ball_ID, key1, key2, key3, key4):
 			connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball if doesn't exist
 		if balls[ball_ID] != None: balls[ball_ID].acc[0] = hex_to_dec("FFFFFF5C")
 
-titlefont = pygame.font.SysFont('interextrabeta', 200)
-title = titlefont.render("Title", True, (255,255,255))
+titlefont = pygame.font.SysFont('interextrabeta', 100)
+title = titlefont.render("The Maze Race", True, (255, 255, 255))
 title_rect = title.get_rect()
 title_rect.center = (640, 360)
-levelfont = pygame.font.SysFont('interextrabeta', 50)
+levelfont = pygame.font.SysFont('interextrabeta', 50, italic=True)
 score_font = pygame.font.SysFont('interextrabeta', 50)
 
 t = 0
@@ -480,8 +649,14 @@ def GUI_loop ():
 
 	for hole in Level.active_level.holes: #draws holes
 		screen.blit(hole.image, (hole.pos[0], hole.pos[1]))
-	goal_centre = [Level.active_level.holes[0].pos[0] + 60, Level.active_level.holes[0].pos[1] + 60]
-	screen.blit(Level.active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
+	try:
+		goal_centre = [Level.active_level.holes[0].pos[0] + 60, Level.active_level.holes[0].pos[1] + 60]
+		screen.blit(Level.active_level.holes[0].white, (goal_centre[0], goal_centre[1]))
+	except: pass
+
+	if active_powerup.dead == 1:
+		active_powerup.respawn()
+	screen.blit(active_powerup.image, (active_powerup.pos[0], active_powerup.pos[1]))
 
 	keys = pygame.key.get_pressed()
 	manual_movement(0, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
@@ -499,6 +674,8 @@ def GUI_loop ():
 		update_level(level4)
 	if keys[pygame.K_5]:
 		update_level(level5)
+	if keys[pygame.K_6]:
+		update_level(dodgeball)
 	
 
 	for ball in balls:
@@ -506,12 +683,33 @@ def GUI_loop ():
 			ball.frame_collision()
 			ball.block_collision()
 			ball.hole_collision()
-			screen.blit(ball.image, (ball.pos[0], ball.pos[1]))
+
+			if ball.powerup_collision() != 'NO':
+				if ball.powerup_collision() == 'speedup':
+					active_powerup.pos = [0, 0]
+					active_powerup.image = transparent
+
+				if ball.powerup_collision() == 'invert':
+					active_powerup.pos = [0, 0]
+					active_powerup.image = transparent
+
+				if ball.powerup_collision() == 'freeze':
+					active_powerup.pos = [0, 0]
+					active_powerup.image = transparent
+			if ball.freeze != "False" or ball.speedup != "False" or ball.invert != "False":
+				ball.poweruptimeout()
+
 			if ball.respawn_timer == 0:
 				if t > 2:	#Determines when to give players control
 					ball.motion_calc(dt)
 			else:
 				ball.respawn_animation()
+			screen.blit(ball.image, (ball.pos[0], ball.pos[1])) #draw ball
+
+			if Level.active_level == dodgeball:
+				ball.ball_kill()
+				if ball.lives > 0:
+					screen.blit(ball.image, (ball.pos[0], ball.pos[1]))
 
 	if infrequent % 5  == 4:
 		for ball in balls:
@@ -519,9 +717,9 @@ def GUI_loop ():
 				ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
 
 	if Level.active_level == level1 and not Level.changing:
-		if t > 0.5 and t < 2.5: #Title stream
+		if t > 0.5 and t < 2.2: #Title stream
 			y = random.randint(340, 380)+np.sin(15*t)*40
-			ParticleSystem.active_systems.append(ParticleSystem(particle_no=200, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", distr="gauss", angle=0, size=20))
+			ParticleSystem.active_systems.append(ParticleSystem(particle_no=250, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", distr="gauss", angle=0, size=20))
 
 	for system in ParticleSystem.active_systems: #Draws all particle systems
 		for particle in system.particles:
@@ -532,13 +730,17 @@ def GUI_loop ():
 			pygame.draw.rect(screen, particle.colour, (particle.pos[0], particle.pos[1], particle.size, particle.size)) #draw any particles
 
 	if Level.active_level == level1 and not Level.changing:
-		if t > 0.5 and t < 2.5: #Title
+		if t > 0.5 and t < 2.2: #Title
 			screen.blit(title, title_rect)
 
-	if t > 2.5:
-		what_level = which_level(Level.active_level) #Displays "Level X"
-		level_num = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
-		screen.blit(level_num, (560,10))
+	if (Level.active_level == level1 and t > 2.5) or Level.active_level != level1 and t > 1.6:
+		if Level.active_level == dodgeball:
+			level_name = levelfont.render("Dodgeball", True, (255, 255, 255))
+			screen.blit(level_name, (520,10))
+		else:
+			what_level = which_level(Level.active_level) #Displays "Level X"
+			level_num = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
+			screen.blit(level_num, (560,10))
 		ball0_text = score_font.render(str(Ball.scores[0]), True, (230, 230, 230))
 		screen.blit(ball0_text, (320,650))
 		ball1_text = score_font.render(str(Ball.scores[1]), True, (240, 240, 90))
@@ -582,8 +784,9 @@ def network ():
 		received = False
 		try:
 			recv_msg = server_socket.recv(1024).decode()
-			print(f"received {recv_msg}")
-			received = True
+			if recv_msg != "":
+				print(f"received {recv_msg}")
+				received = True
 		except:
 			pass
 		if received:
@@ -607,6 +810,15 @@ def network ():
 						balls[int(sender)].acc[1] = hex_to_dec(acc1)
 					except:
 						pass
+					if "buttonpress" in recv_msg:
+						if Level.active_level != dodgeball:
+							update_level(dodgeball)
+						else:
+							update_level(level1)
+					elif "switch" in recv_msg:
+						val = hex_to_dec(recv_msg.split('=')[1].split(',')[0]) #handles repeated tcp messages
+						balls[int(sender)].sensitivity = 5000 + val*10
+						print(f"ball {int(sender)} sensitivity change to {balls[int(sender)].sensitivity}")
 		
 		if send_msg != send_msg_prev: #Check whether to send
 			try:

@@ -36,8 +36,12 @@ def recv(socket):
             if FPGA_empties[FPGAs.index(socket)] % 30 == 0: #At least 10 empties received (doesn't need reset)
                 print(f"FPGA{FPGAs.index(socket)} disconnected")
                 send(game, f"FPGA{FPGAs.index(socket)} disconnected")
+                FPGAs.remove(socket)
                 socket.close() #Attempt graceful disconnect
                 sockets[sockets.index(socket)] = None #removes socket from list, keeping positions intact
+                if FPGAs == []:
+                    quit() #if last FPGA disconnects, end the server process
+
         pass
     if received: #If received, parse
         try:
