@@ -1,20 +1,20 @@
 To game:
-"I'm an FPGA" (identifier)
+"~I'm an FPGA" (identifier)
 OR
 slot 1: [sender]
-0 1 2 3 s 
+~0 ~1 ~2 ~3 ~s 
 slot 2: [dedicated]
 FFFFFFFF:FFFFFFFF
 slot 3:
 buttonpress switch=60
 
 From game:
-"I'm the game" (identifier)
+"~I'm the game" (identifier)
 OR
 slot1: [receiver]
-0 1 2 3 s 
+~0 ~1 ~2 ~3 ~s 
 slot 2:
 LED= 7SEG= scores={100:350:300:455}
 
 
-slot1,slot2,slot3,...
+~slot1,slot2,slot3,...

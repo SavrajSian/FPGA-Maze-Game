@@ -15,6 +15,7 @@ goal_white_image = pygame.image.load("assets/goal_white.png").convert_alpha()
 speedup_image = pygame.image.load("assets/boost_powerup.png")
 invert_image = pygame.image.load("assets/invert_powerup.png")
 freeze_image = pygame.image.load("assets/freeze_powerup.png")
+ghost_image = pygame.image.load("assets/ghost_powerup.png")
 transparent = pygame.image.load(("assets/transparent.png"))
 ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.image.load("assets/ball_y.png").convert_alpha(),
 				pygame.image.load("assets/ball_g.png").convert_alpha(), pygame.image.load("assets/ball_b.png").convert_alpha()]
@@ -24,12 +25,15 @@ ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
 
 balls = [None, None, None, None]
 connected_balls = [None, None, None, None]
+ball_sensitivities = [5000, 5000, 5000, 5000]
 
 class Ball:
 
 	friction = 0.95 #gradual slowing
 	restitution = 0.6 #bounce
 	scores = [0, 0, 0, 0]
+	kills = [0, 0, 0, 0]
+	lives = [10, 10, 10, 10]
 	won = [] #list to determine how many balls have won, and when to change level
 
 	def __init__ (self, ID):
@@ -37,7 +41,7 @@ class Ball:
 		self.acc = [0, 0]
 		self.vel = [0, 0]
 		self.pos = ball_initial_pos[ID].copy() if Level.active_level != dodgeball else [random.randint(100, 1150), random.randint(100, 570)]
-		self.sensitivity = 5000
+		self.sensitivity = ball_sensitivities[ID]
 		self.colour = ball_colours[ID]
 		self.image = ball_images[ID].copy()
 		self.rect = self.image.get_rect()
@@ -46,12 +50,10 @@ class Ball:
 		self.scaler = 1.0
 		self.brightness = 255
 		self.respawn_timer = 20 #ms
-		self.kills = 0
-		self.deaths = 0
-		self.lives = 10
-		self.speedup = 'False'
-		self.invert = 'False'
-		self.freeze = 'False'
+		self.speedup = False
+		self.invert_others = False
+		self.ghost = False
+		self.freeze_others = False
 		self.poweruptimer = 200
 
 	def respawn_animation (self):
@@ -84,11 +86,20 @@ class Ball:
 		return [self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]] #centre on global coords
 
 	def motion_calc (self, dt):
-		if self.speedup != "False":
+		freeze = False
+		invert = False
+		for ball in balls:
+			if ball != None and ball != self:
+				if ball.freeze_others:
+					freeze = True
+				if ball.invert_others:
+					invert = True
+
+		if self.speedup:
 			self.vel[0] += 2*self.acc[0]*dt*self.sensitivity  # v = u + at
 			self.vel[1] += 2*self.acc[1]*dt*self.sensitivity
 
-		elif self.freeze != "False" and self.ID == self.freeze:
+		elif freeze:
 			self.vel[0] = 0
 			self.vel[1] = 0
 		else:
@@ -98,7 +109,7 @@ class Ball:
 		self.vel[0] = self.vel[0]*Ball.friction
 		self.vel[1] = self.vel[1]*Ball.friction
 
-		if self.invert != "False":
+		if invert:
 			self.pos[0] -= self.vel[0] * dt
 			self.pos[1] -= self.vel[1] * dt
 		else:
@@ -210,24 +221,25 @@ class Ball:
 		if distance < 60:  # ball close to powerup
 			ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(255,220,255), lifetime=0.2, distance=200, size=5, coords=[active_powerup.pos[0] + active_powerup.rect.center[0], active_powerup.pos[1] + active_powerup.rect.center[1]]))
 			if active_powerup.type == 'speedup':
-				self.speedup = self.ID
+				self.speedup = True
 				self.image.fill((55, 55, 55), None, pygame.BLEND_RGB_ADD)
 			elif active_powerup.type == 'freeze':
-				savefrID = self.ID
+				self.freeze_others = True
 				for ball in balls:
 					if ball != None:
-						if savefrID != ball.ID:
-							ball.freeze = ball.ID
+						if not ball.freeze_others:
 							ball.image.fill((0, 40, 55), None, pygame.BLEND_RGB_ADD)
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(200,240,255), lifetime=2, distance=10, size=5, coords=[ball.pos[0] + ball.rect.center[0], ball.pos[1] + ball.rect.center[1]]))
 			elif active_powerup.type == 'invert':
-				saveinvID = self.ID
+				self.invert_others = True
 				for ball in balls:
 					if ball!= None:
-						if saveinvID != ball.ID:
-							ball.invert = ball.ID
+						if not ball.invert_others:
 							ball.image.fill((200, 200, 200, 255), None, pygame.BLEND_RGBA_MULT)
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(50,0,50), lifetime=1, distance=50, size=5, coords=[ball.pos[0] + ball.rect.center[0], ball.pos[1] + ball.rect.center[1]]))
+			elif active_powerup.type == 'ghost':
+				self.ghost = True
+				self.image.fill((255, 255, 255, 100), None, pygame.BLEND_RGBA_MULT)
 			active_powerup.dead = 1
 			return str(active_powerup.type)
 		else:
@@ -235,16 +247,17 @@ class Ball:
 
 
 	def poweruptimeout(self):
-		for ball in balls:
-			if ball != None:
-
-				if self.poweruptimer == 0:
-					self.speedup = 'False'
-					self.freeze = 'False'
-					self.invert = 'False'
-					self.image = ball_images[self.ID].copy()
-				elif self.poweruptimer > 0:
-					self.poweruptimer = max(0, self.poweruptimer - 1)
+		if self.poweruptimer == 0:
+			self.speedup = False
+			self.ghost = False
+			self.freeze_others = False
+			self.invert_others = False
+			for ball in balls:
+				if ball != None:
+					ball.image = ball_images[ball.ID].copy()
+			self.poweruptimer = 200
+		elif self.poweruptimer > 0:
+			self.poweruptimer = max(0, self.poweruptimer - 1)
 
 	def ball_kill(self):
 		for ball in balls:
@@ -255,23 +268,23 @@ class Ball:
 					line_of_impact = np_self - np_ball
 					distance = np.linalg.norm(line_of_impact)
 					if distance < 50:
-						if np.linalg.norm(ball.vel) > np.linalg.norm(self.vel):
-							self.__init__(self.ID)
+						if np.linalg.norm(ball.vel) > np.linalg.norm(self.vel): #ball kills self
+							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=200, coords=[self.pos[0]+self.rect.center[0], self.pos[1]+self.rect.center[1]]))
+							if Ball.lives[self.ID] > 1: #don't respawn the last time
+								self.__init__(self.ID)
 							self.vel = [0, 0]
 							self.acc = [0, 0]
-							ball.kills += 1
-							self.deaths += 1
-							if self.lives > 0:
-								self.lives -= 1
+							Ball.kills[ball.ID] += 1
+							Ball.lives[self.ID] = max(0, Ball.lives[self.ID] - 1)
 
-						elif np.linalg.norm(self.vel) > np.linalg.norm(ball.vel):
-							ball.__init__(ball.ID)
+						elif np.linalg.norm(self.vel) > np.linalg.norm(ball.vel): #self kills ball
+							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=ball.colour, lifetime=2, distance=200, coords=[ball.pos[0]+ball.rect.center[0], ball.pos[1]+ball.rect.center[1]]))
+							if Ball.lives[ball.ID] > 1: #don't respawn the last time
+								ball.__init__(ball.ID)
 							ball.vel = [0, 0]
 							ball.acc = [0, 0]
-							self.kills += 1
-							ball.deaths += 1
-							if ball.lives > 0:
-								ball.lives -= 1
+							Ball.kills[self.ID] += 1
+							Ball.lives[ball.ID] = max(0, Ball.lives[ball.ID] - 1)
 
 
 def hex_to_dec (hex):
@@ -416,7 +429,7 @@ class Dodgeball (Level):
 
 class Powerup:
 	active_powerups = None
-	powerupchoices = ['speedup', 'freeze', 'invert']
+	powerupchoices = ['speedup', 'freeze', 'invert', 'ghost']
 
 	def __init__(self, coords, name):
 		if name == 'freeze':
@@ -425,6 +438,8 @@ class Powerup:
 			self.image = speedup_image
 		elif name == 'invert':
 			self.image = invert_image
+		elif name == 'ghost':
+			self.image = ghost_image
 
 		self.rect = self.image.get_rect()
 		self.pos = [coords[0], coords[1]]
@@ -681,22 +696,14 @@ def GUI_loop ():
 	for ball in balls:
 		if ball != None:
 			ball.frame_collision()
-			ball.block_collision()
+			if not ball.ghost:
+				ball.block_collision()
 			ball.hole_collision()
 
 			if ball.powerup_collision() != 'NO':
-				if ball.powerup_collision() == 'speedup':
-					active_powerup.pos = [0, 0]
-					active_powerup.image = transparent
-
-				if ball.powerup_collision() == 'invert':
-					active_powerup.pos = [0, 0]
-					active_powerup.image = transparent
-
-				if ball.powerup_collision() == 'freeze':
-					active_powerup.pos = [0, 0]
-					active_powerup.image = transparent
-			if ball.freeze != "False" or ball.speedup != "False" or ball.invert != "False":
+				active_powerup.pos = [0, 0]
+				active_powerup.image = transparent
+			if ball.freeze_others or ball.speedup or ball.invert_others or ball.ghost:
 				ball.poweruptimeout()
 
 			if ball.respawn_timer == 0:
@@ -708,8 +715,8 @@ def GUI_loop ():
 
 			if Level.active_level == dodgeball:
 				ball.ball_kill()
-				if ball.lives > 0:
-					screen.blit(ball.image, (ball.pos[0], ball.pos[1]))
+				if Ball.lives[ball.ID] == 0:
+					balls[ball.ID] = None
 
 	if infrequent % 5  == 4:
 		for ball in balls:
@@ -737,18 +744,26 @@ def GUI_loop ():
 		if Level.active_level == dodgeball:
 			level_name = levelfont.render("Dodgeball", True, (255, 255, 255))
 			screen.blit(level_name, (520,10))
+			ball0_text = score_font.render(str(Ball.lives[0]), True, (230, 230, 230))
+			screen.blit(ball0_text, (320,650))
+			ball1_text = score_font.render(str(Ball.lives[1]), True, (240, 240, 90))
+			screen.blit(ball1_text, (520,650))
+			ball2_text = score_font.render(str(Ball.lives[2]), True, (120, 240, 120))
+			screen.blit(ball2_text, (720,650))
+			ball3_text = score_font.render(str(Ball.lives[3]), True, (90, 90, 240))
+			screen.blit(ball3_text, (920,650))
 		else:
 			what_level = which_level(Level.active_level) #Displays "Level X"
 			level_num = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
 			screen.blit(level_num, (560,10))
-		ball0_text = score_font.render(str(Ball.scores[0]), True, (230, 230, 230))
-		screen.blit(ball0_text, (320,650))
-		ball1_text = score_font.render(str(Ball.scores[1]), True, (240, 240, 90))
-		screen.blit(ball1_text, (520,650))
-		ball2_text = score_font.render(str(Ball.scores[2]), True, (120, 240, 120))
-		screen.blit(ball2_text, (720,650))
-		ball3_text = score_font.render(str(Ball.scores[3]), True, (90, 90, 240))
-		screen.blit(ball3_text, (920,650))
+			ball0_text = score_font.render(str(Ball.scores[0]), True, (230, 230, 230))
+			screen.blit(ball0_text, (320,650))
+			ball1_text = score_font.render(str(Ball.scores[1]), True, (240, 240, 90))
+			screen.blit(ball1_text, (520,650))
+			ball2_text = score_font.render(str(Ball.scores[2]), True, (120, 240, 120))
+			screen.blit(ball2_text, (720,650))
+			ball3_text = score_font.render(str(Ball.scores[3]), True, (90, 90, 240))
+			screen.blit(ball3_text, (920,650))
 
 	if Level.changing:
 		level_change() #keeps doing this until it sets the variable to false
@@ -760,7 +775,7 @@ def GUI_loop ():
 			running = False
 
 
-server_name = "172.25.208.1"
+server_name = '3.85.233.169' #"192.168.56.1"
 server_port = 12000
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.settimeout(0.01) #10ms timeout for receives, after which silent error is thrown
@@ -775,7 +790,7 @@ def network ():
 			try: server_socket.connect((server_name, server_port))
 			except:
 				pass
-			server_socket.send("I'm the game".encode()) #Identifies which client is game
+			server_socket.send("~I'm the game".encode()) #Identifies which client is game
 			print("Connected")
 			connection = True
 		except:
@@ -785,40 +800,47 @@ def network ():
 		try:
 			recv_msg = server_socket.recv(1024).decode()
 			if recv_msg != "":
-				print(f"received {recv_msg}")
+				if ":" not in recv_msg:
+					print(f"received {recv_msg}")
 				received = True
 		except:
 			pass
 		if received:
-			if recv_msg[-10:] == " connected": #New FPGA connected
-				ball_ID = int(recv_msg[4])
-				balls[ball_ID] = Ball(ball_ID) #Spawn ball
-				connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball
-			elif recv_msg[-12:] == "disconnected":
-				ball_ID = int(recv_msg[4])
-				connected_balls[ball_ID] = None
-				balls[ball_ID] = None
-			else:
-				sender = recv_msg.split(',')[0]
-				if sender == "s":
-					pass #server messages
-				else: #FPGA messages
-					try:
-						acc0 = recv_msg.split(',')[1].split(":")[0]
-						balls[int(sender)].acc[0] = -hex_to_dec(acc0)
-						acc1 = recv_msg.split(',')[1].split(":")[1]
-						balls[int(sender)].acc[1] = hex_to_dec(acc1)
-					except:
-						pass
-					if "buttonpress" in recv_msg:
-						if Level.active_level != dodgeball:
-							update_level(dodgeball)
-						else:
-							update_level(level1)
-					elif "switch" in recv_msg:
-						val = hex_to_dec(recv_msg.split('=')[1].split(',')[0]) #handles repeated tcp messages
-						balls[int(sender)].sensitivity = 5000 + val*10
-						print(f"ball {int(sender)} sensitivity change to {balls[int(sender)].sensitivity}")
+			msgs = recv_msg.split('~')[1:]
+			for msg in msgs:		#Handles multiple messages in same TCP receive
+				if " connected" in msg: #New FPGA connected
+					ball_ID = int(msg.split(" connected")[0][-1])
+					balls[ball_ID] = Ball(ball_ID) #Spawn ball
+					connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball
+				elif " disconnected" in msg:
+					ball_ID = int(msg.split(" disconnected")[0][-1])
+					connected_balls[ball_ID] = None
+					balls[ball_ID] = None
+				else:
+					sender = msg.split(',')[0]
+					if sender == "s":
+						pass #server messages
+					else: #FPGA messages
+						try:
+							acc0 = msg.split(',')[1].split(":")[0]
+							balls[int(sender)].acc[0] = -hex_to_dec(acc0)
+							acc1 = msg.split(',')[1].split(":")[1]
+							balls[int(sender)].acc[1] = hex_to_dec(acc1)
+						except:
+							pass
+						if "buttonpress" in msg:
+							if Level.active_level != dodgeball:
+								update_level(dodgeball)
+							else:
+								update_level(level1)
+						elif "switch" in msg:
+							try:
+								val = hex_to_dec(recv_msg.split('=')[1].split(',')[0])
+								ball_sensitivities[int(sender)] = 5000 + val*10
+								balls[int(sender)].sensitivity = ball_sensitivities[int(sender)]
+								print(f"ball {int(sender)} sensitivity change to {balls[int(sender)].sensitivity}")
+							except:
+								pass
 		
 		if send_msg != send_msg_prev: #Check whether to send
 			try:

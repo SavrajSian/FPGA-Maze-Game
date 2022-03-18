@@ -3,17 +3,17 @@ import time
 
 def parse (msg, socket):
     global game
-    if msg == "I'm the game":
+    if msg == "~I'm the game":
         socket.settimeout(0.01)
         game = socket #Identify which socket is the game
         print(f"{caddr[sockets.index(game)]} is the game")
         return None, None
-    if msg == "I'm an FPGA":
+    if msg == "~I'm an FPGA":
         socket.settimeout(0.01)
         FPGAs.append(socket)
         print(f"{caddr[sockets.index(FPGAs[-1])]} is FPGA{len(FPGAs)-1}") #e.g. "172.31.84.206" is FPGA0
-        send(game, f"FPGA{len(FPGAs)-1} connected") #Send notification to game as well (game must start first)
-        return socket, f"You are FPGA{len(FPGAs)-1}" #Send to FPGA to assign identity
+        send(game, f"~FPGA{len(FPGAs)-1} connected") #Send notification to game as well (game must start first)
+        return socket, f"~You are FPGA{len(FPGAs)-1}" #Send to FPGA to assign identity
     elif socket == game: #from-game format ######################
         recipient = msg.split(',')[0]
         if recipient == "s":
@@ -35,7 +35,7 @@ def recv(socket):
             FPGA_empties[FPGAs.index(socket)] += 1 #No message received; suspicious
             if FPGA_empties[FPGAs.index(socket)] % 30 == 0: #At least 10 empties received (doesn't need reset)
                 print(f"FPGA{FPGAs.index(socket)} disconnected")
-                send(game, f"FPGA{FPGAs.index(socket)} disconnected")
+                send(game, f"~FPGA{FPGAs.index(socket)} disconnected")
                 FPGAs.remove(socket)
                 socket.close() #Attempt graceful disconnect
                 sockets[sockets.index(socket)] = None #removes socket from list, keeping positions intact

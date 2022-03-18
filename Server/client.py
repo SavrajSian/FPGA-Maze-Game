@@ -27,7 +27,7 @@ def connect ():
 	except:
 		pass
 	try:
-		client_socket.send("I'm an FPGA".encode())
+		client_socket.send("~I'm an FPGA".encode())
 		print("Connected")
 		time.sleep(0.05)
 	except Exception as e:
@@ -40,9 +40,9 @@ def recv_msg ():
 		time.sleep(0.005)
 		recv_msg = client_socket.recv(1024).decode()
 		print(f"received {recv_msg}")
-		if recv_msg[0:12] == "You are FPGA": #assignment
+		if "~You are FPGA" in recv_msg: #assignment
 			ID = int(recv_msg[-1])
-			print(f"I am FPGA{ID}")
+			print(f"~I am FPGA{ID}")
 		else:   
 			sender = recv_msg.split(',')[0]
 			if sender == "s":
@@ -60,7 +60,7 @@ def send_msg ():
 		i += 1
 		msg = UART()
 		if i % 100 == 0: #infrequent sends
-			send_msg = f"{ID}," + msg.split()[0] + ":" + msg.split()[1] + ","
+			send_msg = f"~{ID}," + msg.split()[0] + ":" + msg.split()[1] + ","
 			if msg.split()[3] != "3":
 				send_msg += "buttonpress,"
 			if msg.split()[2] != switch:
@@ -74,7 +74,7 @@ def send_msg ():
 				pass
 
 connection = False
-server_name = "172.25.208.1"
+server_name = '3.85.233.169' #"192.168.56.1"
 server_port = 12000
 print(f"Attempting to connect to {server_name}...")
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
