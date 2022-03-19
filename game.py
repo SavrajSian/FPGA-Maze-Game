@@ -33,7 +33,7 @@ class Ball:
 	restitution = 0.6 #bounce
 	scores = [0, 0, 0, 0]
 	kills = [0, 0, 0, 0]
-	lives = [10, 10, 10, 10]
+	lives = [10, 10, 10, 10]##############
 	won = [] #list to determine how many balls have won, and when to change level
 
 	def __init__ (self, ID):
@@ -54,7 +54,7 @@ class Ball:
 		self.invert_others = False
 		self.ghost = False
 		self.freeze_others = False
-		self.poweruptimer = 200
+		self.poweruptimer = 150
 
 	def respawn_animation (self):
 		if self.respawn_timer == 20:
@@ -255,7 +255,7 @@ class Ball:
 			for ball in balls:
 				if ball != None:
 					ball.image = ball_images[ball.ID].copy()
-			self.poweruptimer = 200
+			self.poweruptimer = 150
 		elif self.poweruptimer > 0:
 			self.poweruptimer = max(0, self.poweruptimer - 1)
 
@@ -295,7 +295,9 @@ def hex_to_dec (hex):
 		return d - 4294967296 #hFFFFFFFF+1
 
 def update_level(choice=None): #Done once to determine that level is changing and to which level
-	global t, new_level, new_powerupplacements
+	global t, new_level, new_powerupplacements, scoreboard_show, killboard_show, send_msg
+	scoreboard_show = False
+	killboard_show = False
 	if choice == None:
 		if Level.active_level == level1:
 			new_level = level2
@@ -310,7 +312,10 @@ def update_level(choice=None): #Done once to determine that level is changing an
 			new_level = level5
 			new_powerupplacements = level5_powerup
 		elif Level.active_level == level5:
-			pass######################
+			scores_str = [str(score) for score in Ball.scores]
+			scores_str = ":".join(scores_str)
+			send_msg = f"~s,scores={scores_str}" #change msg so it can be sent
+			scoreboard_show = True #show scoreboard at end of game
 	else:
 		new_level = choice
 		if choice == level1: new_powerupplacements = level1_powerup
@@ -318,8 +323,9 @@ def update_level(choice=None): #Done once to determine that level is changing an
 		elif choice == level3: new_powerupplacements = level3_powerup
 		elif choice == level4: new_powerupplacements = level4_powerup
 		elif choice == level5: new_powerupplacements = level5_powerup
-	t = 0
-	Level.changing = True
+	if not (Level.active_level == level5 and choice == None):
+		t = 0
+		Level.changing = True
 
 def level_change (): #Keeps happening until it sets the variable to false
 	global new_level, balls, new_powerupplacements
@@ -634,17 +640,22 @@ titlefont = pygame.font.SysFont('interextrabeta', 100)
 title = titlefont.render("The Maze Race", True, (255, 255, 255))
 title_rect = title.get_rect()
 title_rect.center = (640, 360)
-levelfont = pygame.font.SysFont('interextrabeta', 50, italic=True)
+level_font = pygame.font.SysFont('interextrabeta', 50, italic=True)
 score_font = pygame.font.SysFont('interextrabeta', 50)
+scoreboard_font = pygame.font.SysFont('interextrabeta', 30)
 
 t = 0
 dt = 0.001
 clock = pygame.time.Clock()
 t0 = time.time()
+
+scoreboard_show = False
+killboard_show = False
+
 running = True
 
 def GUI_loop ():
-	global running, t, t0
+	global running, t, t0, killboard_show, send_msg
 	clock.tick(60)	#keeps framerate at 60fps at most
 	t += time.time() - t0	#keeps track of seconds elapsed since level start
 	t0 = time.time()
@@ -740,9 +751,9 @@ def GUI_loop ():
 		if t > 0.5 and t < 2.2: #Title
 			screen.blit(title, title_rect)
 
-	if (Level.active_level == level1 and t > 2.5) or Level.active_level != level1 and t > 1.6:
+	if (Level.active_level == level1 and t > 2.5) or Level.active_level != level1 and t > 1.6: #display text
 		if Level.active_level == dodgeball:
-			level_name = levelfont.render("Dodgeball", True, (255, 255, 255))
+			level_name = level_font.render("Dodgeball", True, (255, 255, 255))
 			screen.blit(level_name, (520,10))
 			ball0_text = score_font.render(str(Ball.lives[0]), True, (230, 230, 230))
 			screen.blit(ball0_text, (320,650))
@@ -754,7 +765,7 @@ def GUI_loop ():
 			screen.blit(ball3_text, (920,650))
 		else:
 			what_level = which_level(Level.active_level) #Displays "Level X"
-			level_num = levelfont.render(f"Level {what_level}", True, (255, 255, 255))
+			level_num = level_font.render(f"Level {what_level}", True, (255, 255, 255))
 			screen.blit(level_num, (560,10))
 			ball0_text = score_font.render(str(Ball.scores[0]), True, (230, 230, 230))
 			screen.blit(ball0_text, (320,650))
@@ -765,8 +776,89 @@ def GUI_loop ():
 			ball3_text = score_font.render(str(Ball.scores[3]), True, (90, 90, 240))
 			screen.blit(ball3_text, (920,650))
 
+	if scoreboard_show == True: #display scoreboard
+		try:
+			score_darken = pygame.Surface((1280,720))
+			score_darken.set_alpha(120)
+			score_darken.fill((0, 0, 0))
+			screen.blit(score_darken, (0, 0))
+			pygame.draw.rect(screen, (160, 220, 250), (340, 90, 600, 580))
+			final_scores_text = level_font.render("Final Scores", True, (255, 255, 255))
+			screen.blit(final_scores_text, (500,110))
+			ball0_text = score_font.render(str(Ball.scores[0]), True, (255, 255, 255))
+			screen.blit(ball0_text, (400,200))
+			ball1_text = score_font.render(str(Ball.scores[1]), True, (240, 240, 90))
+			screen.blit(ball1_text, (545,200))
+			ball2_text = score_font.render(str(Ball.scores[2]), True, (100, 200, 100))
+			screen.blit(ball2_text, (685,200))
+			ball3_text = score_font.render(str(Ball.scores[3]), True, (110, 110, 240))
+			screen.blit(ball3_text, (830,200))
+			line = level_font.render("________________________", True, (255, 255, 255))
+			screen.blit(line, (370, 240))
+			high_scores_text = level_font.render("High Scores", True, (255, 255, 255))
+			screen.blit(high_scores_text, (500,320))
+			ball_scoreboard_colours = [(255, 255, 255), (240, 240, 90), (100, 200, 100), (110, 110, 240)]
+			high1 = scoreboard_font.render(f"{high_scores[0][1]}     ({high_scores[0][2]})", True, ball_scoreboard_colours[int(high_scores[0][0])])
+			screen.blit(high1, (440,400))
+			high2 = scoreboard_font.render(f"{high_scores[1][1]}     ({high_scores[1][2]})", True, ball_scoreboard_colours[int(high_scores[1][0])])
+			screen.blit(high2, (440,450))
+			high3 = scoreboard_font.render(f"{high_scores[2][1]}     ({high_scores[2][2]})", True, ball_scoreboard_colours[int(high_scores[2][0])])
+			screen.blit(high3, (440,500))
+			high4 = scoreboard_font.render(f"{high_scores[3][1]}     ({high_scores[3][2]})", True, ball_scoreboard_colours[int(high_scores[3][0])])
+			screen.blit(high4, (440,550))
+			high5 = scoreboard_font.render(f"{high_scores[4][1]}     ({high_scores[4][2]})", True, ball_scoreboard_colours[int(high_scores[4][0])])
+			screen.blit(high5, (440,600))
+		except:
+			pass
+	
+	if killboard_show == True:
+		try:
+			score_darken = pygame.Surface((1280,720))
+			score_darken.set_alpha(120)
+			score_darken.fill((0, 0, 0))
+			screen.blit(score_darken, (0, 0))
+			pygame.draw.rect(screen, (160, 220, 250), (340, 90, 600, 580))
+			final_kills_text = level_font.render("Final Kills", True, (255, 255, 255))
+			screen.blit(final_kills_text, (530,110))
+			ball0_text = score_font.render(str(Ball.kills[0]), True, (255, 255, 255))
+			screen.blit(ball0_text, (400,200))
+			ball1_text = score_font.render(str(Ball.kills[1]), True, (240, 240, 90))
+			screen.blit(ball1_text, (545,200))
+			ball2_text = score_font.render(str(Ball.kills[2]), True, (100, 200, 100))
+			screen.blit(ball2_text, (685,200))
+			ball3_text = score_font.render(str(Ball.kills[3]), True, (110, 110, 240))
+			screen.blit(ball3_text, (830,200))
+			line = level_font.render("________________________", True, (255, 255, 255))
+			screen.blit(line, (370, 240))
+			high_scores_text = level_font.render("High Scores", True, (255, 255, 255))
+			screen.blit(high_scores_text, (500,320))
+			ball_scoreboard_colours = [(255, 255, 255), (240, 240, 90), (100, 200, 100), (110, 110, 240)]
+			high1 = scoreboard_font.render(f"{high_kills[0][1]}     ({high_kills[0][2]})", True, ball_scoreboard_colours[int(high_kills[0][0])])
+			screen.blit(high1, (440,400))
+			high2 = scoreboard_font.render(f"{high_kills[1][1]}     ({high_kills[1][2]})", True, ball_scoreboard_colours[int(high_kills[1][0])])
+			screen.blit(high2, (440,450))
+			high3 = scoreboard_font.render(f"{high_kills[2][1]}     ({high_kills[2][2]})", True, ball_scoreboard_colours[int(high_kills[2][0])])
+			screen.blit(high3, (440,500))
+			high4 = scoreboard_font.render(f"{high_kills[3][1]}     ({high_kills[3][2]})", True, ball_scoreboard_colours[int(high_kills[3][0])])
+			screen.blit(high4, (440,550))
+			high5 = scoreboard_font.render(f"{high_kills[4][1]}     ({high_kills[4][2]})", True, ball_scoreboard_colours[int(high_kills[4][0])])
+			screen.blit(high5, (440,600))
+		except:
+			pass
+
 	if Level.changing:
 		level_change() #keeps doing this until it sets the variable to false
+
+	if Level.active_level == dodgeball:
+		if len([ball for ball in balls if ball != None]) == 1 and not all(Ball.lives): #check if last ball standing
+			killboard_show = True
+			kills_str = [str(kill) for kill in Ball.kills]
+			kills_str = ":".join(kills_str)
+			send_msg = f"~s,kills={kills_str}" #change msg so it can be sent
+		else:
+			killboard_show = False
+	else:
+		killboard_show = False
 
 	pygame.display.update()
 
@@ -784,7 +876,7 @@ send_msg = "None"
 send_msg_prev = "None"
 
 def network ():
-	global recv_msg, send_msg, send_msg_prev, connection
+	global recv_msg, send_msg, send_msg_prev, connection, high_scores, high_kills
 	if connection == False:
 		try:
 			try: server_socket.connect((server_name, server_port))
@@ -800,8 +892,6 @@ def network ():
 		try:
 			recv_msg = server_socket.recv(1024).decode()
 			if recv_msg != "":
-				if ":" not in recv_msg:
-					print(f"received {recv_msg}")
 				received = True
 		except:
 			pass
@@ -818,8 +908,18 @@ def network ():
 					balls[ball_ID] = None
 				else:
 					sender = msg.split(',')[0]
-					if sender == "s":
-						pass #server messages
+					if sender == "s": #server messages
+						print(f"received {recv_msg}")
+						if "high_scores" in recv_msg:
+							high_scores = recv_msg.split('=')[1].split(',')[0]
+							high_scores = high_scores.split('|')
+							for i in range(len(high_scores)):
+								high_scores[i] = high_scores[i].split(';')
+						elif "high_kills" in recv_msg:
+							high_kills = recv_msg.split('=')[1].split(',')[0]
+							high_kills = high_kills.split('|')
+							for i in range(len(high_kills)):
+								high_kills[i] = high_kills[i].split(';')
 					else: #FPGA messages
 						try:
 							acc0 = msg.split(',')[1].split(":")[0]
@@ -844,7 +944,7 @@ def network ():
 		
 		if send_msg != send_msg_prev: #Check whether to send
 			try:
-				#server_socket.send(send_msg.encode()) ######################
+				server_socket.send(send_msg.encode())
 				print(f"sent {send_msg}")
 			except:
 				pass

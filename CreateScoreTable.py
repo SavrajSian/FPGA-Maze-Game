@@ -19,7 +19,7 @@ def create_score_table(dynamodb=None):
         AttributeDefinitions=[
             {
                 'AttributeName': 'player',
-                'AttributeType': 'S'
+                'AttributeType': 'N'
             },
             {
                 'AttributeName': 'score',

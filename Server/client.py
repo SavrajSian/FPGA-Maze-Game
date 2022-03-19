@@ -30,8 +30,7 @@ def connect ():
 		client_socket.send("~I'm an FPGA".encode())
 		print("Connected")
 		time.sleep(0.05)
-	except Exception as e:
-		print(e)
+	except:
 		pass
 
 def recv_msg ():
