@@ -45,7 +45,7 @@ int life = 1023;
 
 void print_data(char *accel_x, char *accel_y, char *switchdata, char *buttondata){
 	char *printMsg;
-	asprintf(&printMsg, "<--> %s %s <--> %s <--> %s <--> \n", accel_x, accel_y, switchdata, buttondata); 	// Print out the strings
+	asprintf(&printMsg, "%s %s %s %s \n", accel_x, accel_y, switchdata, buttondata); 	// Print out the strings
 	alt_putstr(printMsg);
 	free(printMsg);
 	memset(text, 0, 2*CHARLIM);
@@ -224,13 +224,14 @@ int main(){
 
 	// HEX DISPLAYS
 
+
 	while (1) {
+		alt_up_accelerometer_spi_read_x_axis(acc_dev, & x_read);
+		alt_up_accelerometer_spi_read_y_axis(acc_dev, & y_read);
 		IOWR_ALTERA_AVALON_PIO_DATA(LED_BASE, life);
 
 		/* <--> SENDING DATA <--> */
-		alt_up_accelerometer_spi_read_x_axis(acc_dev, & x_read);
 		sprintf(accel_data_x, "%x", x_read);
-		alt_up_accelerometer_spi_read_y_axis(acc_dev, & y_read);
 		sprintf(accel_data_y, "%x", y_read);
 		//alt_up_accelerometer_spi_read_z_axis(acc_dev, & z_read);
 		//sprintf(accel_data_z, "%x", z_read);
@@ -259,7 +260,6 @@ int main(){
 
 		//sprintf(to_text, "Got read thing: %s\n", read_chars());
 		//send_text(to_text);*/
-
 	}
 
 	return 0;
