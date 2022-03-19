@@ -12,7 +12,15 @@ def send_on_jtag(cmd):
     return val
 
 def perform_computation():
-    res = send_on_jtag("7SEG=NOGO")
+    res = send_on_jtag(" ")
+    return res
+
+def perform_computation2():
+    res = send_on_jtag("                    ")
+    return res
+
+def perform_computation3():
+    res = send_on_jtag("7SEG=PICKUP HP")
     return res
 
 def main():
@@ -23,15 +31,17 @@ def main():
     server_port = 12000
 
     send_msg = "Connecting to server!"
-    msg = perform_computation()
-    print(msg)
+    
+
     while(1):
         #client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #client_socket.connect((server_name, server_port))
         #some work
-        msg = perform_computation()
+        msg = perform_computation3()
         print(msg)
 
+        #msg = perform_computation3()
+        #print(msg)
         #send the message  to the udp server
         #client_socket.send(msg)
 
@@ -42,6 +52,7 @@ def main():
         #send_msg = msg
         
         #client_socket.close()
+
 
 if __name__ == '__main__':
     main()
@@ -59,3 +70,34 @@ if __name__ == '__main__':
 
 
 # cd /cygdrive/c/Users/Brendon/Documents/Github/Info_Proc_Lab/Server
+
+		# 	//print(0, 0, 0, 0, 0, 0);
+		# 	// Text needs to be of multiple of 6. For now add spaces?
+		# 	// W = VV
+		# 	// M = nn
+
+		# /*print(getBin(to_print[0]), getBin(to_print[1]), getBin(to_print[2]), getBin(to_print[3]), getBin(to_print[4]), getBin(to_print[5]));
+		# if (length != 0)
+		# {
+		# 	rotation = 0;
+		# }
+		# else
+		# {
+		# 	if (rotation = 19) { print(0, 0, 0, 0, 0, 0); }
+		# 	else
+		# 	{
+
+		# 	}
+		# }
+		# if ( (length == 0) && (rotation = 19) ) { print(0, 0, 0, 0, 0, 0); }
+		# else
+		# {
+		# 	if (length == 0)
+		# 	{
+		# 		if (count == 100){
+		# 			print(getBin(hold_data[rotation%6]), getBin(hold_data[(rotation+1)%6]), getBin(hold_data[(rotation+2)%6]), getBin(hold_data[(rotation+3)%6]), getBin(hold_data[(rotation+4)%6]), getBin(hold_data[(rotation+5)%6]));
+		# 			rotation += 1;
+		# 			count = 0;
+		# 		}
+		# 	}
+		# }*/
