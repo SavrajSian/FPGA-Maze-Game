@@ -4,7 +4,7 @@
  * Machine generated for CPU 'cpu' in SOPC Builder design 'puzzle_setup'
  * SOPC Builder design path: ../../puzzle_setup.sopcinfo
  *
- * Generated: Tue Mar 01 16:12:09 GMT 2022
+ * Generated: Sat Mar 19 22:25:44 GMT 2022
  */
 
 /*
@@ -226,7 +226,7 @@
 
 #define ALT_INCLUDE_INSTRUCTION_RELATED_EXCEPTION_API
 #define ALT_MAX_FD 4
-#define ALT_SYS_CLK none
+#define ALT_SYS_CLK TIMER
 #define ALT_TIMESTAMP_CLK TIMER
 
 

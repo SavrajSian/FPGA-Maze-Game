@@ -106,7 +106,6 @@ char * interpret_command(char* command)
 		return "";
 	}
 	return "";
-	//alt_putstr(command);
 }
 
 char * read_chars() {
@@ -120,44 +119,6 @@ char * read_chars() {
 	//print_text(text, length);							// Print input text
 
 	return interpret_command(data);
-}
-
-void output_switch( int new, int old )
-{
-	char text[2*CHARLIM];
-
-	int x = new^old;
-	int switchnum;
-
-	if ( x != 0 ){
-		for (int i = 1; i < 513; i=i*2){
-			if( x == i ){
-				switchnum = log2(i);
-				if (new>old) 	{ sprintf(text, "SW%d ON\n", switchnum + 1); send_text(text); }
-				else 			{ sprintf(text, "SW%d OFF\n", switchnum + 1); send_text(text); }
-			}
-		}
-	}
-}
-
-void output_button ( int new, int old)
-{
-	char text[2*CHARLIM];
-
-	int x = new^old;
-
-	if ( x != 0 ){
-		if( x == 1 ){
-			if (new<old) 	{ sprintf(text, "B1 pressed\n"); send_text(text); }
-		}
-		if( x == 2 ){
-			if (new<old) 	{ sprintf(text, "B2 pressed\n"); send_text(text); }
-		}
-		if( x == 3 ){
-			if (old == 1) 		{ sprintf(text, "B1 pressed\n"); send_text(text); }
-			else if (old ==2 ) 	{ sprintf(text, "B2 pressed\n"); send_text(text); }
-		}
-	}
 }
 
 
@@ -248,7 +209,7 @@ int main(){
 	int count = 0;
 
 	while (1) {
-		count += 1;
+		count++;
 		IOWR_ALTERA_AVALON_PIO_DATA(LED_BASE, life);
 
 		/* <--> SENDING DATA <--> */
@@ -299,12 +260,8 @@ int main(){
 
 		/* <--> RECIEVING DATA <--> */
 
-		//alt_putstr( to_print );
 		//length = strlen( to_print );
 		//temp_length = strlen( temp_data );
-
-		//if (x<20) strcpy(to_print, read_chars());
-		//else strcpy(to_print, "                    ");
 
 		// HEX7 display
 		char temp_data[4*CHARLIM];
@@ -312,19 +269,21 @@ int main(){
 
 		strcpy(to_print, read_chars());
 		strcpy(temp_data, to_print);
+		//alt_putstr( to_print );
 
 		if (count == 5)
 		{
-			x += 1;
+			x++;
 			count = 0;
 		}
-		if (x>40)
+		if (x > 40)
 		{
 			print(getBin('!'), getBin('!'), getBin('!'), getBin('!'), getBin('!'), getBin('!'));
 		}
 		else{
 			print(getBin(to_print[x%20]), getBin(to_print[(x+1)%20]), getBin(to_print[(x+2)%20]), getBin(to_print[(x+3)%20]), getBin(to_print[(x+4)%20]), getBin(to_print[(x+5)%20]));
 		}
+
 	}
 	return 0;
 }

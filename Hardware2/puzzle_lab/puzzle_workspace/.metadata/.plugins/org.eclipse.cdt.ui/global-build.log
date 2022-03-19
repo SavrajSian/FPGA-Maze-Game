@@ -1,4 +1,4 @@
-21:31:12 **** Incremental Build of configuration Nios II for project puzzle2 ****
+23:22:19 **** Incremental Build of configuration Nios II for project puzzle2 ****
 make all 
 Info: Building ../puzzle2_bsp/
 C:/intelFPGA_lite/18.0/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../puzzle2_bsp/
@@ -6,37 +6,37 @@ C:/intelFPGA_lite/18.0/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-dir
 Info: Compiling DE_seven_segment_display.c to obj/default/DE_seven_segment_display.o
 nios2-elf-gcc -xc -MP -MMD -c -I../puzzle2_bsp//HAL/inc -I../puzzle2_bsp/ -I../puzzle2_bsp//drivers/inc  -pipe -D__hal__ -DALT_NO_C_PLUS_PLUS -DALT_NO_CLEAN_EXIT -D'exit(a)=_exit(a)' -DALT_NO_EXIT -DALT_USE_DIRECT_DRIVERS -DALT_NO_INSTRUCTION_EMULATION -DALT_USE_SMALL_DRIVERS -DALT_SINGLE_THREADED    -Os -g -Wall   -mno-hw-div -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o obj/default/DE_seven_segment_display.o DE_seven_segment_display.c
 DE_seven_segment_display.c: In function 'main':
-DE_seven_segment_display.c:281:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+DE_seven_segment_display.c:242:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
    sprintf(accel_data_x, "%x", out_x);
                          ^
-DE_seven_segment_display.c:281:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
-DE_seven_segment_display.c:282:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+DE_seven_segment_display.c:242:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+DE_seven_segment_display.c:243:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
    sprintf(accel_data_y, "%x", out_y);
                          ^
-DE_seven_segment_display.c:282:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
-DE_seven_segment_display.c:246:6: warning: unused variable 'temp_length' [-Wunused-variable]
+DE_seven_segment_display.c:243:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+DE_seven_segment_display.c:207:6: warning: unused variable 'temp_length' [-Wunused-variable]
   int temp_length = 0;
       ^
-DE_seven_segment_display.c:245:6: warning: unused variable 'length' [-Wunused-variable]
+DE_seven_segment_display.c:206:6: warning: unused variable 'length' [-Wunused-variable]
   int length = 0;
       ^
-DE_seven_segment_display.c:236:21: warning: unused variable 'button_data_old' [-Wunused-variable]
+DE_seven_segment_display.c:197:21: warning: unused variable 'button_data_old' [-Wunused-variable]
   int button_datain, button_data_old = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
                      ^
-DE_seven_segment_display.c:234:21: warning: unused variable 'switch_data_old' [-Wunused-variable]
+DE_seven_segment_display.c:195:21: warning: unused variable 'switch_data_old' [-Wunused-variable]
   int switch_datain, switch_data_old = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
                      ^
-DE_seven_segment_display.c:229:7: warning: unused variable 'accel_data_z' [-Wunused-variable]
+DE_seven_segment_display.c:190:7: warning: unused variable 'accel_data_z' [-Wunused-variable]
   char accel_data_z[4*CHARLIM];
        ^
-DE_seven_segment_display.c:218:9: warning: unused variable 'z_read' [-Wunused-variable]
+DE_seven_segment_display.c:179:9: warning: unused variable 'z_read' [-Wunused-variable]
   alt_32 z_read;
          ^
 Info: Linking puzzle2.elf
 nios2-elf-g++  -T'../puzzle2_bsp//linker.x' -msys-crt0='../puzzle2_bsp//obj/HAL/src/crt0.o' -msys-lib=hal_bsp -L../puzzle2_bsp/   -Wl,-Map=puzzle2.map   -Os -g -Wall   -mno-hw-div -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o puzzle2.elf obj/default/DE_seven_segment_display.o -lm -msys-lib=m
 nios2-elf-insert puzzle2.elf --thread_model hal --cpu_name cpu --qsys true --simulation_enabled false --id 0 --sidp 0x210b0 --timestamp 1646147935 --stderr_dev jtag_uart --stdin_dev jtag_uart --stdout_dev jtag_uart --sopc_system_name puzzle_setup --quartus_project_dir "C:/Users/Brendon/Desktop/puzzle_lab" --jdi C:/Users/Brendon/Desktop/puzzle_lab/software/puzzle2_bsp/../../puzzle.jdi --sopcinfo C:/Users/Brendon/Desktop/puzzle_lab/software/puzzle2_bsp/../../puzzle_setup.sopcinfo
-Info: (puzzle2.elf) 59 KBytes program size (code + initialized data).
-Info:               2012 Bytes free for stack + heap.
+Info: (puzzle2.elf) 57 KBytes program size (code + initialized data).
+Info:               4288 Bytes free for stack + heap.
 Info: Creating puzzle2.objdump
 nios2-elf-objdump --disassemble --syms --all-header --source puzzle2.elf >puzzle2.objdump
 [puzzle2 build complete]

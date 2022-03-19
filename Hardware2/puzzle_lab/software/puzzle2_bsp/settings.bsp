@@ -2,6 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
+        <BspGeneratedTimeStamp>Mar 19, 2022 10:52:23 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1647730343137</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>C:\Users\Brendon\Desktop\puzzle_lab\software\puzzle2_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>..\..\puzzle_setup.sopcinfo</SopcDesignFile>

@@ -16,11 +16,11 @@ def perform_computation():
     return res
 
 def perform_computation2():
-    res = send_on_jtag("                    ")
+    res = send_on_jtag("7SEG=HELLO NNAHANOOR     ")
     return res
 
 def perform_computation3():
-    res = send_on_jtag("7SEG=PICKUP HP")
+    res = send_on_jtag("7SEG=HELLO HP            ")
     return res
 
 def main():
@@ -32,12 +32,18 @@ def main():
 
     send_msg = "Connecting to server!"
     
+    msg = perform_computation3()
+    print(msg)
+
+    sleep(5)
 
     while(1):
         #client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #client_socket.connect((server_name, server_port))
         #some work
-        msg = perform_computation3()
+        
+
+        msg = perform_computation2()
         print(msg)
 
         #msg = perform_computation3()
