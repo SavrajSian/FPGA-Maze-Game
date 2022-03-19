@@ -1,0 +1,70 @@
+17:18:48 **** Incremental Build of configuration Nios II for project puzzle2 ****
+make all 
+Info: Building ../puzzle2_bsp/
+C:/intelFPGA_lite/18.0/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../puzzle2_bsp/
+[BSP build complete]
+Info: Compiling DE_seven_segment_display.c to obj/default/DE_seven_segment_display.o
+nios2-elf-gcc -xc -MP -MMD -c -I../puzzle2_bsp//HAL/inc -I../puzzle2_bsp/ -I../puzzle2_bsp//drivers/inc  -pipe -D__hal__ -DALT_NO_C_PLUS_PLUS -DALT_NO_CLEAN_EXIT -D'exit(a)=_exit(a)' -DALT_NO_EXIT -DALT_USE_DIRECT_DRIVERS -DALT_NO_INSTRUCTION_EMULATION -DALT_USE_SMALL_DRIVERS -DALT_SINGLE_THREADED    -Os -g -Wall   -mno-hw-div -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o obj/default/DE_seven_segment_display.o DE_seven_segment_display.c
+DE_seven_segment_display.c: In function 'main':
+DE_seven_segment_display.c:283:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+   sprintf(accel_data_x, "%x", out_x);
+                         ^
+DE_seven_segment_display.c:283:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+DE_seven_segment_display.c:284:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+   sprintf(accel_data_y, "%x", out_y);
+                         ^
+DE_seven_segment_display.c:284:25: warning: format '%x' expects argument of type 'unsigned int', but argument 3 has type 'alt_32 {aka long int}' [-Wformat=]
+DE_seven_segment_display.c:251:6: warning: unused variable 'count' [-Wunused-variable]
+  int count = 0;
+      ^
+DE_seven_segment_display.c:250:6: warning: variable 'rotation' set but not used [-Wunused-but-set-variable]
+  int rotation = 0;
+      ^
+DE_seven_segment_display.c:246:7: warning: unused variable 'hold_data' [-Wunused-variable]
+  char hold_data[4*CHARLIM];
+       ^
+DE_seven_segment_display.c:237:21: warning: unused variable 'button_data_old' [-Wunused-variable]
+  int button_datain, button_data_old = IORD_ALTERA_AVALON_PIO_DATA(BUTTON_BASE);
+                     ^
+DE_seven_segment_display.c:235:21: warning: unused variable 'switch_data_old' [-Wunused-variable]
+  int switch_datain, switch_data_old = IORD_ALTERA_AVALON_PIO_DATA(SWITCH_BASE);
+                     ^
+DE_seven_segment_display.c:230:7: warning: unused variable 'accel_data_z' [-Wunused-variable]
+  char accel_data_z[4*CHARLIM];
+       ^
+DE_seven_segment_display.c:219:9: warning: unused variable 'z_read' [-Wunused-variable]
+  alt_32 z_read;
+         ^
+DE_seven_segment_display.c: In function 'getTxt':
+DE_seven_segment_display.c:397:9: warning: passing argument 1 of 'strcpy' makes pointer from integer without a cast [-Wint-conversion]
+  strcpy(newCurr, "test");
+         ^
+In file included from c:\intelfpga_lite\18.0\nios2eds\bin\gnu\h-x86_64-mingw32\nios2-elf\include\stdio.h:29:0,
+                 from DE_seven_segment_display.c:2:
+c:\intelfpga_lite\18.0\nios2eds\bin\gnu\h-x86_64-mingw32\nios2-elf\include\string.h:30:8: note: expected 'char * restrict' but argument is of type 'char'
+ char  *_EXFUN(strcpy,(char *__restrict, const char *__restrict));
+        ^
+DE_seven_segment_display.c:398:18: warning: passing argument 1 of 'strlen' makes pointer from integer without a cast [-Wint-conversion]
+  length = strlen(newCurr);
+                  ^
+In file included from c:\intelfpga_lite\18.0\nios2eds\bin\gnu\h-x86_64-mingw32\nios2-elf\include\stdio.h:29:0,
+                 from DE_seven_segment_display.c:2:
+c:\intelfpga_lite\18.0\nios2eds\bin\gnu\h-x86_64-mingw32\nios2-elf\include\string.h:33:9: note: expected 'const char *' but argument is of type 'char'
+ size_t  _EXFUN(strlen,(const char *));
+         ^
+DE_seven_segment_display.c: In function 'interpret_command':
+DE_seven_segment_display.c:110:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+DE_seven_segment_display.c: In function 'getTxt':
+DE_seven_segment_display.c:397:2: warning: 'newCurr' is used uninitialized in this function [-Wuninitialized]
+  strcpy(newCurr, "test");
+  ^
+Info: Linking puzzle2.elf
+nios2-elf-g++  -T'../puzzle2_bsp//linker.x' -msys-crt0='../puzzle2_bsp//obj/HAL/src/crt0.o' -msys-lib=hal_bsp -L../puzzle2_bsp/   -Wl,-Map=puzzle2.map   -Os -g -Wall   -mno-hw-div -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o puzzle2.elf obj/default/DE_seven_segment_display.o -lm -msys-lib=m
+nios2-elf-insert puzzle2.elf --thread_model hal --cpu_name cpu --qsys true --simulation_enabled false --id 0 --sidp 0x210b0 --timestamp 1646147935 --stderr_dev jtag_uart --stdin_dev jtag_uart --stdout_dev jtag_uart --sopc_system_name puzzle_setup --quartus_project_dir "C:/Users/Brendon/Desktop/puzzle_lab" --jdi C:/Users/Brendon/Desktop/puzzle_lab/software/puzzle2_bsp/../../puzzle.jdi --sopcinfo C:/Users/Brendon/Desktop/puzzle_lab/software/puzzle2_bsp/../../puzzle_setup.sopcinfo
+Info: (puzzle2.elf) 61 KBytes program size (code + initialized data).
+Info:               124 Bytes free for stack + heap.
+Info: Creating puzzle2.objdump
+nios2-elf-objdump --disassemble --syms --all-header --source puzzle2.elf >puzzle2.objdump
+[puzzle2 build complete]
