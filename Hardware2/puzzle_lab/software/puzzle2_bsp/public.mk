@@ -77,12 +77,12 @@ ALT_CPPFLAGS += -pipe
 
 # This following VERSION comment indicates the version of the tool used to 
 # generate this makefile. A makefile variable is provided for VERSION as well. 
-# ACDS_VERSION: 18.0
-ACDS_VERSION := 18.0
+# ACDS_VERSION: 18.1
+ACDS_VERSION := 18.1
 
 # This following BUILD_NUMBER comment indicates the build number of the tool 
 # used to generate this makefile. 
-# BUILD_NUMBER: 614
+# BUILD_NUMBER: 625
 
 # Quartus Generated JDI File. Required for resolving node instance ID's with 
 # design component names. 

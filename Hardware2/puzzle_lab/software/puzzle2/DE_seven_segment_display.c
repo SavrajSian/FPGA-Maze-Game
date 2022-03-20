@@ -209,7 +209,6 @@ int main(){
 	int count = 0;
 
 	while (1) {
-		count++;
 		IOWR_ALTERA_AVALON_PIO_DATA(LED_BASE, life);
 
 		/* <--> SENDING DATA <--> */
@@ -267,22 +266,19 @@ int main(){
 		char temp_data[4*CHARLIM];
 		char to_print[4*CHARLIM];
 
-		strcpy(to_print, read_chars());
-		strcpy(temp_data, to_print);
 		//alt_putstr( to_print );
 
-		if (count == 5)
+		if (count > 5)
 		{
-			x++;
+			strcpy(to_print, read_chars());
+			strcpy(temp_data, to_print);
 			count = 0;
 		}
-		if (x > 40)
-		{
-			print(getBin('!'), getBin('!'), getBin('!'), getBin('!'), getBin('!'), getBin('!'));
-		}
-		else{
-			print(getBin(to_print[x%20]), getBin(to_print[(x+1)%20]), getBin(to_print[(x+2)%20]), getBin(to_print[(x+3)%20]), getBin(to_print[(x+4)%20]), getBin(to_print[(x+5)%20]));
-		}
+
+		print(getBin(to_print[0]), getBin(to_print[1]), getBin(to_print[2]), getBin(to_print[3]), getBin(to_print[4]), getBin(to_print[5]));
+
+
+		count++;
 
 	}
 	return 0;

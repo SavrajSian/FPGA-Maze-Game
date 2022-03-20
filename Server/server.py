@@ -28,6 +28,26 @@ def parse (msg, socket):
 					high_scores[i] = ";".join(high_scores[i])
 				high_scores = "|".join(high_scores)
 				msg = "~s,high_scores=" + high_scores
+				sort_order = []
+				for i in range(len(scores)):
+					sort_order.append([i, scores[i]])
+				sort_order = sorted(sort_order, key=lambda x: x[1], reverse=True)
+				try:
+					first = FPGAs[int(sort_order[0][0])]
+					send(first, "~s,7SEG=1ST")
+				except: pass
+				try:
+					second = FPGAs[int(sort_order[1][0])]
+					send(second, "~s,7SEG=2ND")
+				except: pass
+				try:
+					third = FPGAs[int(sort_order[2][0])]
+					send(third, "~s,7SEG=3RD")
+				except: pass
+				try:
+					fourth = FPGAs[int(sort_order[3][0])]
+					send(fourth, "~s,7SEG=4TH")
+				except: pass
 			elif "kills" in msg:
 				kills = [int(msg.split('=')[1].split(":")[i]) for i in range(4)]
 				UpdateKills.upload_kills(kills)
@@ -40,7 +60,10 @@ def parse (msg, socket):
 				msg = "~s,high_kills=" + high_kills
 			send(game, msg)
 		else:
-			send(recipient, msg) #game to FPGA
+			try:  #game to FPGA
+				FPGA = FPGAs[int(recipient[1:])]
+				send(FPGA, msg)
+			except: pass
 	else: #to-game format
 		send(game, msg) #FPGA to game
 		
@@ -53,7 +76,7 @@ def recv(socket):
 	except: #This signifies disconnect
 		if socket != game:
 			FPGA_empties[FPGAs.index(socket)] += 1 #No message received; suspicious
-			if FPGA_empties[FPGAs.index(socket)] % 50 == 0: #At least 50 empties received (doesn't need reset)
+			if FPGA_empties[FPGAs.index(socket)] > 50: #At least 50 empties received
 				print(f"FPGA{FPGAs.index(socket)} disconnected")
 				send(game, f"~FPGA{FPGAs.index(socket)} disconnected")
 				FPGAs.remove(socket)

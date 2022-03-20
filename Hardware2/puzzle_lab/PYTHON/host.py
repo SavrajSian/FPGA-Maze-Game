@@ -6,62 +6,62 @@ output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, 
 
 
 def send_on_jtag(cmd):
-    output.stdin.write(bytearray(str(cmd + "\n"), 'utf-8'))                                  
-    output.stdin.flush()
-    val = output.stdout.readline()
-    return val
+	output.stdin.write(bytearray(str(cmd + "\n"), 'utf-8'))
+	output.stdin.flush()
+	val = output.stdout.readline()
+	return val
 
 def perform_computation():
-    res = send_on_jtag(" ")
-    return res
+	res = send_on_jtag(" ")
+	return res
 
 def perform_computation2():
-    res = send_on_jtag("7SEG=HELLO NNAHANOOR     ")
-    return res
+	res = send_on_jtag("7SEG=HELLO NNAHANOOR")
+	return res
 
 def perform_computation3():
-    res = send_on_jtag("7SEG=HELLO HP            ")
-    return res
+	res = send_on_jtag("7SEG=HELLO HP       ")
+	return res
 
 def main():
-    print("We're in tcp client..."); 
-    #the server name and port client wishes to access 
-    server_name = '3.8.153.58' # FIXME: Put your server ipv4 addr
-    #'52.205.252.164' 
-    server_port = 12000
+	print("We're in tcp client..."); 
+	#the server name and port client wishes to access 
+	server_name = '3.8.153.58' # FIXME: Put your server ipv4 addr
+	#'52.205.252.164' 
+	server_port = 12000
 
-    send_msg = "Connecting to server!"
-    
-    msg = perform_computation3()
-    print(msg)
+	send_msg = "Connecting to server!"
+	
+	msg = perform_computation2()
+	print(msg)
 
-    sleep(5)
+	sleep(5)
 
-    while(1):
-        #client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #client_socket.connect((server_name, server_port))
-        #some work
-        
+	while(1):
+		#client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		#client_socket.connect((server_name, server_port))
+		#some work
+		
 
-        msg = perform_computation2()
-        print(msg)
+		msg = perform_computation2()
+		print(msg)
 
-        #msg = perform_computation3()
-        #print(msg)
-        #send the message  to the udp server
-        #client_socket.send(msg)
+		#msg = perform_computation3()
+		#print(msg)
+		#send the message  to the udp server
+		#client_socket.send(msg)
 
-        #return values from the server
-        #msg = client_socket.recv(1024)
-        #print(msg.decode())
+		#return values from the server
+		#msg = client_socket.recv(1024)
+		#print(msg.decode())
 
-        #send_msg = msg
-        
-        #client_socket.close()
+		#send_msg = msg
+		
+		#client_socket.close()
 
 
 if __name__ == '__main__':
-    main()
+	main()
 
 ## cd /cygdrive/c/Users/Brendon/Desktop/puzzle_lab/software/puzzle2
 ## 

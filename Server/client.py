@@ -6,16 +6,16 @@ import threading
 output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 for i in range(4):
 	val = output.stdout.readline().decode() #get rid of header from nios2-terminal
-send_to_fpga = ""
+send_to_fpga = "7SEG=     "
+
 ID = None
 switch = '0'
 
 def UART():
 	global send_to_fpga
-	#output.stdin.write(bytearray(str(send_to_fpga + "\n"), 'utf-8'))                                  
-	#output.stdin.flush()
+	output.stdin.write(bytearray(str(send_to_fpga + "\n"), 'utf-8'))                                  
+	output.stdin.flush()
 	val = output.stdout.readline().decode()
-	send_to_fpga = ""
 	return val
 
 def connect ():
@@ -34,7 +34,7 @@ def connect ():
 		pass
 
 def recv_msg ():
-	global recv_msg, ID
+	global recv_msg, ID, send_to_fpga
 	while True:
 		time.sleep(0.005)
 		recv_msg = client_socket.recv(1024).decode()
@@ -42,15 +42,17 @@ def recv_msg ():
 		if "~You are FPGA" in recv_msg: #assignment
 			ID = int(recv_msg[-1])
 			print(f"~I am FPGA{ID}")
+			SEG_IDs = ["SILVER", "YELLOUU", "GREEN", "BLUE"]
+			send_to_fpga = "7SEG=" + SEG_IDs[ID]
 		else:   
 			sender = recv_msg.split(',')[0]
-			if sender == "s":
-				pass #server messages
-			else: #??? messages
-				try:
-					pass    #???
-				except:
-					pass
+			if sender == "~s":
+				if "7SEG=" in recv_msg:
+					SEG = recv_msg.split('=')[1].split('~')[0]
+					print(SEG)
+					send_to_fpga = "7SEG=" + SEG
+			else: #from game
+				pass
 
 def send_msg ():
 	global send_msg, switch
@@ -58,14 +60,14 @@ def send_msg ():
 	while True:
 		i += 1
 		msg = UART()
-		if i % 100 == 0: #infrequent sends
+		if i % 10 == 0: #infrequent sends
+			time.sleep(0.005)
 			send_msg = f"~{ID}," + msg.split()[0] + ":" + msg.split()[1] + ","
 			if msg.split()[3] != "3":
 				send_msg += "buttonpress,"
 			if msg.split()[2] != switch:
 				send_msg += f"switch={msg.split()[2]},"
 				switch = msg.split()[2]
-			time.sleep(0.05)
 			try:
 				client_socket.send(send_msg.encode())
 				print(f"sent {send_msg}")

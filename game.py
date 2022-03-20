@@ -53,7 +53,7 @@ ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
 
 balls = [None, None, None, None]
 connected_balls = [None, None, None, None]
-ball_sensitivities = [5000, 5000, 5000, 5000]
+ball_sensitivities = [3000, 3000, 3000, 3000]
 
 class Ball:
 
@@ -785,10 +785,9 @@ def GUI_loop ():
 				if Ball.lives[ball.ID] == 0:
 					balls[ball.ID] = None
 
-	if infrequent % 5  == 4:
-		for ball in balls:
-			if ball != None:
-				ball.acc = [0,0]	#set acceleration to 0 if no key pressed. After FPGA and manual override
+	for ball in balls:
+		if ball != None and ball.ID not in do_not_override:
+			ball.acc = [0,0]	#set acceleration to 0 if no key pressed. Only for manual override
 
 	if Level.active_level == level1 and not Level.changing:
 		if t > 0.5 and t < 2.2: #Title stream
@@ -932,9 +931,10 @@ server_socket.settimeout(0.01) #10ms timeout for receives, after which silent er
 connection = False
 send_msg = "None"
 send_msg_prev = "None"
+do_not_override = []
 
 def network ():
-	global recv_msg, send_msg, send_msg_prev, connection, high_scores, high_kills
+	global recv_msg, send_msg, send_msg_prev, connection, high_scores, high_kills, do_not_override
 	if connection == False:
 		try:
 			try: server_socket.connect((server_name, server_port))
@@ -960,6 +960,7 @@ def network ():
 					ball_ID = int(msg.split(" connected")[0][-1])
 					balls[ball_ID] = Ball(ball_ID) #Spawn ball
 					connected_balls[ball_ID] = balls[ball_ID].ID #Connect ball
+					do_not_override.append(balls[ball_ID].ID)
 				elif " disconnected" in msg:
 					ball_ID = int(msg.split(" disconnected")[0][-1])
 					connected_balls[ball_ID] = None
