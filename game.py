@@ -1,4 +1,5 @@
 import pygame, pygame.gfxdraw
+import pygame.mixer as mixer
 import math, time, random
 import numpy as np
 import socket
@@ -19,6 +20,33 @@ ghost_image = pygame.image.load("assets/ghost_powerup.png")
 transparent = pygame.image.load(("assets/transparent.png"))
 ball_images = [pygame.image.load("assets/ball.png").convert_alpha(), pygame.image.load("assets/ball_y.png").convert_alpha(),
 				pygame.image.load("assets/ball_g.png").convert_alpha(), pygame.image.load("assets/ball_b.png").convert_alpha()]
+
+whoosh = mixer.Sound("assets/sound/woosh.wav")
+ball_hit = mixer.Sound("assets/sound/metalhit.wav")
+goal = mixer.Sound("assets/sound/goal.wav")
+fall = mixer.Sound("assets/sound/fall.wav")
+freeze = mixer.Sound("assets/sound/freeze.wav")
+invert = mixer.Sound("assets/sound/invert.wav")
+ghost = mixer.Sound("assets/sound/ghost.wav")
+speedup = mixer.Sound("assets/sound/speed.wav")
+pop = mixer.Sound("assets/sound/pop.wav")
+shatter = mixer.Sound("assets/sound/shatter.wav")
+
+mixer.init()
+mixer.music.load("assets/sound/bgmusic.wav")
+mixer.music.set_volume(0.3)
+mixer.music.play()
+
+mixer.set_num_channels(8)
+whoosh_channel = mixer.Channel(1)
+ball_hit_channel = mixer.Channel(2)
+pop_channel = mixer.Channel(3)
+pop_channel.set_volume(0.5)
+powerup_channel = mixer.Channel(4)
+hole_channel = mixer.Channel(5)
+shatter_channel = mixer.Channel(6)
+
+
 ball_colours = [(230, 230, 230), (255, 255, 170), (170, 255, 170), (170, 220, 255)]
 
 ball_initial_pos = [[150, 100], [110, 140], [190, 140], [150, 180]]  #[X, Y]
@@ -68,6 +96,7 @@ class Ball:
 		elif self.respawn_timer > 5:
 			if self.respawn_timer == 10:
 				ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=self.colour, lifetime=0.5, distance=200, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
+				ball_hit_channel.play(ball_hit)
 			self.pos[0] -= 1
 			self.pos[1] -= 1
 			self.scaler += 0.1
@@ -77,6 +106,9 @@ class Ball:
 			self.scaler -= 0.1
 			if self.respawn_timer == 1:
 				ParticleSystem.active_systems.append(ParticleSystem(particle_no=10, colour=self.colour, lifetime=0.5, distance=100, size=3, coords=[self.pos[0] + self.rect.center[0], self.pos[1] + self.rect.center[1]]))
+				ball_hit_channel.set_volume(0.2)
+				ball_hit_channel.play(ball_hit)
+				ball_hit_channel.set_volume(0.5)
 		self.scaler = round(self.scaler, 2)
 		self.respawn_timer = max(0, self.respawn_timer - 1)
 		self.image = pygame.transform.smoothscale(ball_images[self.ID].copy(), (self.size*self.scaler, self.size*self.scaler))
@@ -122,21 +154,25 @@ class Ball:
 			self.vel[0] = -self.vel[0]*Ball.restitution
 			if abs(self.vel[0]) > 1000:
 				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0], self.pos[1] + self.rect.center[1]]))
+				ball_hit_channel.play(ball_hit)
 		if self.get_centre()[0] + self.rect.center[0] > 1200:	#right hitbox
 			self.pos[0] = 1156
 			self.vel[0] = -self.vel[0]*Ball.restitution
 			if abs(self.vel[0]) > 1000:
 				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
+				ball_hit_channel.play(ball_hit)
 		if self.get_centre()[1] - self.rect.center[1] < 72:		#up hitbox
 			self.pos[1] = 72
 			self.vel[1] = -self.vel[1]*Ball.restitution
 			if abs(self.vel[1]) > 1000:
 				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
+				ball_hit_channel.play(ball_hit)
 		if self.get_centre()[1] + self.rect.center[1] > 645:	#down hitbox
 			self.pos[1] = 601
 			self.vel[1] = -self.vel[1]*Ball.restitution
 			if abs(self.vel[1]) > 1000:
 				ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
+				ball_hit_channel.play(ball_hit)
 
 	def block_collision (self):
 		for block in Level.active_level.blocks:
@@ -149,6 +185,7 @@ class Ball:
 				self.vel[0] = -self.vel[0]*Ball.restitution
 				if abs(self.vel[0]) > 1000:
 					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] + self.rect.right, self.pos[1] + self.rect.center[1]]))
+					ball_hit_channel.play(ball_hit)
 			#right hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.right - 20) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.right) and\
@@ -158,6 +195,7 @@ class Ball:
 				self.vel[0] = -self.vel[0]*Ball.restitution
 				if abs(self.vel[0]) > 1000:
 					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0], self.pos[1] + self.rect.center[1]]))
+					ball_hit_channel.play(ball_hit)
 			#up hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.left + 10) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.right - 5) and\
@@ -167,6 +205,7 @@ class Ball:
 				self.vel[1] = -self.vel[1]*Ball.restitution
 				if abs(self.vel[1]) > 1000:
 					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1] + self.rect.bottom]))
+					ball_hit_channel.play(ball_hit)
 			#down hitbox
 			if (self.get_centre()[0] + self.halfsize > block.rect.left + 10) and\
 			   (self.get_centre()[0] - self.halfsize < block.rect.right - 5) and\
@@ -176,6 +215,7 @@ class Ball:
 				self.vel[1] = -self.vel[1]*Ball.restitution
 				if abs(self.vel[1]) > 1000:
 					ParticleSystem.active_systems.append(ParticleSystem(particle_no=random.randint(1,3), colour=self.colour, lifetime=0.5, distance=10, size=3, coords=[self.pos[0] +  self.rect.center[0], self.pos[1]]))
+					ball_hit_channel.play(ball_hit)
 
 	def hole_collision (self):
 		for hole in Level.active_level.holes:
@@ -194,10 +234,18 @@ class Ball:
 						if type(hole) == Goal:
 							self.image.fill((255, 255, 255, self.brightness), None, pygame.BLEND_RGBA_MULT)
 							self.image.fill((255-self.brightness, 255-self.brightness, 255-self.brightness, 255), None, pygame.BLEND_RGB_ADD)
+							if not hole_channel.get_busy():
+								hole_channel.play(goal)
 						else:
 							self.image.fill((self.brightness, self.brightness, self.brightness, 255), None, pygame.BLEND_RGBA_MULT)
+							if not hole_channel.get_busy():
+								hole_channel.play(fall)
 					else:
 						self.image.fill((255, 255, 255, 0), None, pygame.BLEND_RGBA_MULT) #hide ball during timeout
+					if self.scaler < 0.85:
+						if type(hole) == Goal:
+							if not shatter_channel.get_busy():
+								shatter_channel.play(shatter)
 					if self.scaler < 0.8:
 						if type(hole) == Goal:
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=400, coords=[hole.pos[0]+hole.rect.center[0], hole.pos[1]+hole.rect.center[1]]))
@@ -221,10 +269,12 @@ class Ball:
 		if distance < 60:  # ball close to powerup
 			ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(255,220,255), lifetime=0.2, distance=200, size=5, coords=[active_powerup.pos[0] + active_powerup.rect.center[0], active_powerup.pos[1] + active_powerup.rect.center[1]]))
 			if active_powerup.type == 'speedup':
+				powerup_channel.play(speedup)
 				self.speedup = True
 				self.image.fill((55, 55, 55), None, pygame.BLEND_RGB_ADD)
 			elif active_powerup.type == 'freeze':
 				self.freeze_others = True
+				powerup_channel.play(freeze)
 				for ball in balls:
 					if ball != None:
 						if not ball.freeze_others:
@@ -232,12 +282,14 @@ class Ball:
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(200,240,255), lifetime=2, distance=10, size=5, coords=[ball.pos[0] + ball.rect.center[0], ball.pos[1] + ball.rect.center[1]]))
 			elif active_powerup.type == 'invert':
 				self.invert_others = True
+				powerup_channel.play(invert)
 				for ball in balls:
 					if ball!= None:
 						if not ball.invert_others:
 							ball.image.fill((200, 200, 200, 255), None, pygame.BLEND_RGBA_MULT)
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(50,0,50), lifetime=1, distance=50, size=5, coords=[ball.pos[0] + ball.rect.center[0], ball.pos[1] + ball.rect.center[1]]))
 			elif active_powerup.type == 'ghost':
+				powerup_channel.play(ghost)
 				self.ghost = True
 				self.image.fill((255, 255, 255, 100), None, pygame.BLEND_RGBA_MULT)
 			active_powerup.dead = 1
@@ -268,6 +320,7 @@ class Ball:
 					line_of_impact = np_self - np_ball
 					distance = np.linalg.norm(line_of_impact)
 					if distance < 50:
+						shatter_channel.play(shatter)
 						if np.linalg.norm(ball.vel) > np.linalg.norm(self.vel): #ball kills self
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=200, coords=[self.pos[0]+self.rect.center[0], self.pos[1]+self.rect.center[1]]))
 							if Ball.lives[self.ID] > 1: #don't respawn the last time
@@ -333,6 +386,8 @@ def level_change (): #Keeps happening until it sets the variable to false
 		pass
 	elif t < 1:
 		ParticleSystem.active_systems.append(ParticleSystem(particle_no=500, colour="transition", lifetime=1, distance=8000, coords=[-200, 360], type="stream", distr="unif", angle=0, width=500, size=30))
+		if not whoosh_channel.get_busy():
+			whoosh_channel.play(whoosh)
 	elif t < 1.4:
 		Level.active_level = new_level
 		Ball.won = []
@@ -712,6 +767,7 @@ def GUI_loop ():
 			ball.hole_collision()
 
 			if ball.powerup_collision() != 'NO':
+				pop_channel.play(pop)
 				active_powerup.pos = [0, 0]
 				active_powerup.image = transparent
 			if ball.freeze_others or ball.speedup or ball.invert_others or ball.ghost:
@@ -738,6 +794,8 @@ def GUI_loop ():
 		if t > 0.5 and t < 2.2: #Title stream
 			y = random.randint(340, 380)+np.sin(15*t)*40
 			ParticleSystem.active_systems.append(ParticleSystem(particle_no=250, colour="title", lifetime=1, distance=8000, coords=[-200, y], type="stream", distr="gauss", angle=0, size=20))
+			if not whoosh_channel.get_busy():
+				whoosh_channel.play(whoosh)
 
 	for system in ParticleSystem.active_systems: #Draws all particle systems
 		for particle in system.particles:
