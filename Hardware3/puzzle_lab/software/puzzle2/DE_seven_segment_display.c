@@ -269,7 +269,9 @@ int main(){
 		//length = strlen( to_print );
 		//temp_length = strlen( temp_data );
 
-		strcpy(to_print, read_chars());
+		if (count % 30 == 0) {
+			strcpy(to_print, read_chars());
+		}
 
 		//if ( strcmp(to_print, temp_data) != 0 ) { x = -1; };
 
@@ -282,12 +284,11 @@ int main(){
 		//alt_putstr(to_print);
 		//alt_putstr(temp_data);
 
-		if (count == 5)
+		if (count % 30 == 0)
 		{
 			if(x<=60) { x++; }
-			count = 0;
 		}
-		if (x > 60)
+		if (x > 50)
 		{
 			print(getBin('!'), getBin('!'), getBin('!'), getBin('!'), getBin('!'), getBin('!'));
 		}

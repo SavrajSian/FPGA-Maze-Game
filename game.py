@@ -312,6 +312,7 @@ class Ball:
 			self.poweruptimer = max(0, self.poweruptimer - 1)
 
 	def ball_kill(self):
+		global send_msg
 		for ball in balls:
 			if ball != None:
 				if ball.ID != self.ID:
@@ -323,6 +324,7 @@ class Ball:
 						shatter_channel.play(shatter)
 						if np.linalg.norm(ball.vel) > np.linalg.norm(self.vel): #ball kills self
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=self.colour, lifetime=2, distance=200, coords=[self.pos[0]+self.rect.center[0], self.pos[1]+self.rect.center[1]]))
+							send_msg = f"~{self.ID},LIFE-"
 							if Ball.lives[self.ID] > 1: #don't respawn the last time
 								self.__init__(self.ID)
 							self.vel = [0, 0]
@@ -332,6 +334,7 @@ class Ball:
 
 						elif np.linalg.norm(self.vel) > np.linalg.norm(ball.vel): #self kills ball
 							ParticleSystem.active_systems.append(ParticleSystem(particle_no=50, colour=ball.colour, lifetime=2, distance=200, coords=[ball.pos[0]+ball.rect.center[0], ball.pos[1]+ball.rect.center[1]]))
+							send_msg = f"~{ball.ID},LIFE-"
 							if Ball.lives[ball.ID] > 1: #don't respawn the last time
 								ball.__init__(ball.ID)
 							ball.vel = [0, 0]
@@ -1005,6 +1008,7 @@ def network ():
 			try:
 				server_socket.send(send_msg.encode())
 				print(f"sent {send_msg}")
+				send_msg = "aaaaaaaaaaaaaaaaaa"
 			except:
 				pass
 		send_msg_prev = send_msg
