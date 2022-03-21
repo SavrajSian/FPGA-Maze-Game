@@ -268,6 +268,7 @@ class Ball:
 		distance = np.linalg.norm(powline)
 		if distance < 60:  # ball close to powerup
 			ParticleSystem.active_systems.append(ParticleSystem(particle_no=20, colour=(255,220,255), lifetime=0.2, distance=200, size=5, coords=[active_powerup.pos[0] + active_powerup.rect.center[0], active_powerup.pos[1] + active_powerup.rect.center[1]]))
+			Ball.scores[self.ID] += 5
 			if active_powerup.type == 'speedup':
 				powerup_channel.play(speedup)
 				self.speedup = True

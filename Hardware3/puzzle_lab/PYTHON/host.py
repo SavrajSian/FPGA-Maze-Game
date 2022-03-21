@@ -6,33 +6,36 @@ output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, 
 
 
 def send_on_jtag(cmd):
-    output.stdin.write(bytearray(str(cmd + "\n"), 'utf-8'))                                  
-    output.stdin.flush()
+    output.stdin.write(bytearray(str(cmd + "\n"), 'utf-8'))
+    try:output.stdin.flush()
+    except Exception as e:
+        print(e)
+        pass
     val = output.stdout.readline()
     return val
 
 def perform_computation():
-    res = send_on_jtag("7SEG=TESTING ONE         ")
+    res = send_on_jtag("s")
     return res
 
 def perform_computation2():
-    res = send_on_jtag("7SEG=HELLO GROUP         ")
+    res = send_on_jtag("y")
     return res
 
 def perform_computation3():
-    res = send_on_jtag("7SEG=GOODBYE GROUP       ")
+    res = send_on_jtag("1")
     return res
 
 def perform_computation4():
-    res = send_on_jtag("7SEG=!!!!!!!!!!!!!!!!!!!!")
+    res = send_on_jtag("!")
     return res
 
 def perform_computation5():
-    res = send_on_jtag("LIFE-")
+    res = send_on_jtag("l")
     return res
 
 def perform_computation6():
-    res = send_on_jtag("LIFE+")
+    res = send_on_jtag("g")
     return res
 
 def main():

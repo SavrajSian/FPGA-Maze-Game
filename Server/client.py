@@ -4,9 +4,9 @@ import time
 import threading
 
 output = subprocess.Popen("nios2-terminal", shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-for i in range(4):
+for i in range(5):
 	val = output.stdout.readline() #get rid of header from nios2-terminal
-send_to_fpga = "7SEG=!!!!!!!!!!!!!!!!!!!!"
+send_to_fpga = "!"
 reset_7seg = 0
 
 ID = None
@@ -14,12 +14,12 @@ switch = '0'
 
 def UART():
 	global send_to_fpga, reset_7seg
-	val = output.stdout.readline().decode()
 	output.stdin.write(bytearray(str(send_to_fpga + "\n"), 'utf-8'))
 	output.stdin.flush()
-	if send_to_fpga != "7SEG=!!!!!!!!!!!!!!!!!!!!":
+	if send_to_fpga != "!":
 		print(send_to_fpga)
-	send_to_fpga = "7SEG=!!!!!!!!!!!!!!!!!!!!"
+	send_to_fpga = "!"
+	val = output.stdout.readline().decode()
 	return val
 
 def connect ():
@@ -46,21 +46,16 @@ def recv_msg ():
 		if "~You are FPGA" in recv_msg: #assignment
 			ID = int(recv_msg[-1])
 			print(f"~I am FPGA{ID}")
-			SEG_IDs = ["SILVER", "YELLOUU", "GREEN", "BLUE"]
-			send_to_fpga = "7SEG=" + SEG_IDs[ID]
-			for i in range(20-len(SEG_IDs[ID])):
-				send_to_fpga += "!"
+			SEG_IDs = ["s", "y", "g", "b"]
+			send_to_fpga = SEG_IDs[ID]
 		else:   
 			sender = recv_msg.split(',')[0]
 			if sender == "~s":
 				if "7SEG=" in recv_msg:
-					SEG = recv_msg.split('=')[1].split('~')[0]
-					send_to_fpga = "7SEG=" + SEG
-					for i in range(20-len(SEG)):
-						send_to_fpga += "!"
+					send_to_fpga = recv_msg.split('=')[1].split('~')[0][0]
 			else: #from game
 				if "LIFE-" in recv_msg:
-					send_to_fpga = "LIFE-"
+					send_to_fpga = "l"
 
 def send_msg ():
 	global send_msg, switch
@@ -68,7 +63,7 @@ def send_msg ():
 	while True:
 		i += 1
 		msg = UART()
-		if i % 10 == 0: #infrequent sends
+		if i % 1 == 0: #infrequent sends
 			time.sleep(0.005)
 			send_msg = f"~{ID}," + msg.split()[0] + ":" + msg.split()[1] + ","
 			if msg.split()[3] != "3":
