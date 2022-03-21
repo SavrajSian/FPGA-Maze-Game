@@ -76,7 +76,7 @@ def recv(socket):
 	except: #This signifies disconnect
 		if socket != game:
 			FPGA_empties[FPGAs.index(socket)] += 1 #No message received; suspicious
-			if FPGA_empties[FPGAs.index(socket)] > 500: #At least 500 empties received
+			if FPGA_empties[FPGAs.index(socket)] > 50: #At least 50 empties received
 				print(f"FPGA{FPGAs.index(socket)} disconnected")
 				send(game, f"~FPGA{FPGAs.index(socket)} disconnected")
 				FPGAs.remove(socket)

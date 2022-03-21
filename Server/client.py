@@ -63,7 +63,7 @@ def send_msg ():
 	while True:
 		i += 1
 		msg = UART()
-		if i % 1 == 0: #infrequent sends
+		if i % 10 == 0: #infrequent sends
 			time.sleep(0.005)
 			send_msg = f"~{ID}," + msg.split()[0] + ":" + msg.split()[1] + ","
 			if msg.split()[3] != "3":
