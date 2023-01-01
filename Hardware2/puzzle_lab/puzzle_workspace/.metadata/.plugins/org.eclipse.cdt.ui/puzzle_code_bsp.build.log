@@ -1,6 +1,0 @@
-15:34:44 **** Clean-only build of configuration Nios II for project puzzle_code_bsp ****
-make clean 
-[BSP clean complete]
-
-15:34:45 Build Finished (took 604ms)
-
